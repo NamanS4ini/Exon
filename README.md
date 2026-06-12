@@ -1,6 +1,6 @@
-# Exeon
+# Exon
 
-An interpreter implementation for the Exeon programming language.
+An interpreter implementation for the Exon programming language.
 
 ## Plan
 
