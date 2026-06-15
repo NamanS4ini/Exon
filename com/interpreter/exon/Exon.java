@@ -34,7 +34,7 @@ public class Exon {
         BufferedReader reader = new BufferedReader(input);
 
         for (;;) {
-            System.out.println("--> ");
+            System.out.println("-->");
             String line = reader.readLine();
             if (line == null)
                 break;
@@ -52,7 +52,7 @@ public class Exon {
     }
 
     static void error(int line, String message) {
-        report(line, "", message)
+        report(line, "", message);
     }
 
     private static void report(int line, String where, String message) {
