@@ -115,7 +115,7 @@ class Scanner {
                 addToken(STAR);
                 break;
             case '!':
-                addToken(match('=') ? BANG_EQUAL : EQUAL);
+                addToken(match('=') ? BANG_EQUAL : BANG);
                 break;
             case '=':
                 addToken(match('=') ? EQUAL_EQUAL : EQUAL);
@@ -188,7 +188,7 @@ class Scanner {
     }
 
     private void string() {
-        while (peek() != '"' && isAtEnd()) {
+        while (peek() != '"' && !isAtEnd()) {
             if (peek() == '\n')
                 line++;
             advance();
