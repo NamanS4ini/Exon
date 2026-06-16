@@ -26,7 +26,8 @@ public class Exon {
         byte[] bytes = Files.readAllBytes(Paths.get(path));
         run(new String(bytes, Charset.defaultCharset()));
 
-        if(hadError) System.exit(65);
+        if (hadError)
+            System.exit(65);
     }
 
     private static void runPrompt() throws IOException {
@@ -34,7 +35,7 @@ public class Exon {
         BufferedReader reader = new BufferedReader(input);
 
         for (;;) {
-            System.out.println("-->");
+            System.out.print("/> ");
             String line = reader.readLine();
             if (line == null)
                 break;
