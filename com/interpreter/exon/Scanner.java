@@ -1,4 +1,5 @@
 package com.interpreter.exon;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -13,7 +14,7 @@ class Scanner {
     private int current = 0;
     private int line = 1;
     private static final Map<String, TokenType> keywords;
-    
+
     static {
         keywords = new HashMap<>();
         keywords.put("and", AND);
@@ -60,7 +61,7 @@ class Scanner {
         }
         return source.charAt(current + 1);
     }
-    
+
     private boolean isAlpha(char c) {
         return (c >= 'a' && c <= 'z') ||
                 (c >= 'A' && c <= 'Z') ||
@@ -73,7 +74,8 @@ class Scanner {
         }
         String text = source.substring(start, current);
         TokenType type = keywords.get(text);
-        if(type == null) type = IDENTIFIER;
+        if (type == null)
+            type = IDENTIFIER;
         addToken(type);
     }
 
@@ -128,7 +130,7 @@ class Scanner {
                 break;
             case '/':
                 if (match('/')) {
-                    // Meaning its a comment and we ignore the line until the end
+                    // * Meaning its a comment and we ignore the line until the end
                     while (peek() != '\n' && !isAtEnd()) {
                         advance();
                     }
@@ -136,7 +138,7 @@ class Scanner {
                     addToken(SLASH);
                 }
                 break;
-            // ignore whitespace
+            // * ignore whitespace
             case ' ':
             case '\r':
             case '\t':
@@ -155,8 +157,7 @@ class Scanner {
                     number();
                 } else if (isAlpha(c)) {
                     identifier();
-                } 
-                else {
+                } else {
                     Exon.error(line, "Unexpected character.");
                 }
                 break;
@@ -171,8 +172,8 @@ class Scanner {
         while (isDigit(peek())) {
             advance();
         }
-        
-        // faction part:
+
+        // * faction part:
         if (peek() == '.' && isDigit(peekNext())) {
             advance();
             while (isDigit(peek()))
@@ -192,7 +193,7 @@ class Scanner {
             Exon.error(line, "Unterminated string.");
             return;
         }
-        // advance(); for closing '"'
+        // * advance(); for closing '"'
         String value = source.substring(start + 1, current - 1);
         addToken(STRING, value);
     }

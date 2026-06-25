@@ -8,7 +8,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class generateAst {
-    public static void name(String[] args) throws IOException {
+    public static void main(String[] args) throws IOException {
         if (args.length != 1) {
             System.err.println("Usage: generate_AST <OUTPUT DIRECTORY>");
             System.exit(64);
@@ -24,7 +24,7 @@ public class generateAst {
     private static void defineAst(String outputDir, String baseName, List<String> types) throws IOException {
         String path = outputDir + "/" + baseName + ".java";
 
-        PrintWriter writer = new PrintWriter(path, "UFT-8");
+        PrintWriter writer = new PrintWriter(path, "UTF-8");
 
         writer.println("package com.interpreter.exon;");
         writer.println();
@@ -59,7 +59,7 @@ public class generateAst {
     }
 
     private static void defineType(PrintWriter writer, String baseName, String className, String fieldList) {
-        writer.println(" static class " + className + "extants " + baseName + "{");
+        writer.println(" static class " + className + " extends " + baseName + "{");
 
         //* Constructor
 
@@ -74,14 +74,14 @@ public class generateAst {
 
         //* vsisitor pattern
         writer.println();
-        writer.println("    @override");
+        writer.println("    @Override");
         writer.println("    <R> R accept(Visitor<R> visitor) {");
         writer.println("    return visitor.visit" + className + baseName + "(this);");
         writer.println("    }");
 
         writer.println();
         for (String field : fields) {
-            writer.println("    final" + field + ";");
+            writer.println("    final " + field + ";");
         }
 
         writer.println("    }");
