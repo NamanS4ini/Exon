@@ -17,7 +17,7 @@ The scanner walks through the source one character at a time and produces tokens
 - string literals enclosed in double quotes
 - number literals, including decimals
 - identifiers and keywords
-- line comments that start with `//`
+- line comments that start with `//*`
 
 Keyword recognition is handled through a keyword map. That means the scanner first reads a full identifier, then checks whether the text matches a reserved word such as `and`, `class`, `fxn`, `or`, `put`, or `until`.
 

@@ -1,4 +1,4 @@
-//? Tool to create syntax tree classes.
+//* Tool to create syntax tree classes.
 
 package com.interpreter.tool;
 
@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.Arrays;
 import java.util.List;
-
-
 
 public class generateAst {
     public static void name(String[] args) throws IOException {
@@ -34,20 +32,36 @@ public class generateAst {
         writer.println();
         writer.println("abstract class " + baseName + " {");
 
-        //! AST classes.
+        defineVisitor(writer, baseName, types);
+
+        //* AST classes.
         for (String type : types) {
             String className = type.split(":")[0].trim();
             String fields = type.split(":")[1].trim();
             defineType(writer, baseName, className, fields);
         }
 
+        //* base accept method:
+        writer.println();
+        writer.println("    abstract <R> R accept(Visitor<R> visitor);");
+
         writer.println("}");
         writer.close();
     }
+
+    private static void defineVisitor(PrintWriter writer, String baseName, List<String> types) {
+        writer.println("    interface Visitor<R> {");
+        for (String type : types) {
+            String typeName = type.split(":")[0].trim();
+            writer.println("    R visit" + typeName + baseName + "(" + typeName + " " + baseName.toLowerCase() + ");");
+        }
+        writer.println("    }");
+    }
+
     private static void defineType(PrintWriter writer, String baseName, String className, String fieldList) {
         writer.println(" static class " + className + "extants " + baseName + "{");
 
-        //! Constructor
+        //* Constructor
 
         writer.println("    " + className + "(" + fieldList + ") {");
         String[] fields = fieldList.split(", ");
@@ -56,6 +70,13 @@ public class generateAst {
             writer.println("    this." + name + " = " + name + ";");
         }
 
+        writer.println("    }");
+
+        //* vsisitor pattern
+        writer.println();
+        writer.println("    @override");
+        writer.println("    <R> R accept(Visitor<R> visitor) {");
+        writer.println("    return visitor.visit" + className + baseName + "(this);");
         writer.println("    }");
 
         writer.println();
