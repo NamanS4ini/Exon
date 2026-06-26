@@ -42,7 +42,7 @@ Exon/
 └── com/
     └── interpreter/
         ├── exon/                    ← Core interpreter package
-        │   ├── Exon.java            ← Entry point — file runner & REPL
+        │   ├── Exon.java            ← Entry point - file runner & REPL
         │   ├── Scanner.java         ← Lexer: source text → token stream
         │   ├── Token.java           ← Token value object
         │   ├── TokenType.java       ← Enum of every token type
@@ -56,9 +56,9 @@ Exon/
 
 ## ✨ Features
 
-### 🔍 1 — Lexical Scanner
+### 🔍 1 - Lexical Scanner
 
-`Scanner.java` walks the source one character at a time and produces a flat list of `Token` objects — each carrying its type, raw lexeme, optional literal value, and line number.
+`Scanner.java` walks the source one character at a time and produces a flat list of `Token` objects - each carrying its type, raw lexeme, optional literal value, and line number.
 
 <details>
 <summary><b>Token categories recognised</b></summary>
@@ -67,8 +67,8 @@ Exon/
 |:---|:---|
 | Single-character symbols | `(` `)` `{` `}` `,` `.` `-` `+` `;` `*` `/` |
 | One/two-character operators | `!` `!=` `=` `==` `<` `<=` `>` `>=` |
-| String literals | `"hello, world"` — supports multi-line strings |
-| Number literals | `42` · `3.14` — integers and decimals |
+| String literals | `"hello, world"` - supports multi-line strings |
+| Number literals | `42` · `3.14` - integers and decimals |
 | Identifiers | `myVar` · `_count` |
 | Line comments | `// anything to end of line` |
 | Keywords | `and` `class` `else` `false` `for` `fxn` `if` `nil` `or` `out` `put` `return` `super` `this` `true` `until` |
@@ -76,11 +76,11 @@ Exon/
 </details>
 
 > [!NOTE]
-> Keywords are resolved *after* a full identifier is consumed — the scanner checks the final string against a `HashMap<String, TokenType>`. Unknown characters and unterminated strings both emit a line-aware error: `[line N] Error: <message>`.
+> Keywords are resolved *after* a full identifier is consumed - the scanner checks the final string against a `HashMap<String, TokenType>`. Unknown characters and unterminated strings both emit a line-aware error: `[line N] Error: <message>`.
 
 ---
 
-### 🏷️ 2 — Token & TokenType
+### 🏷️ 2 - Token & TokenType
 
 `Token.java` is a minimal, immutable value object:
 
@@ -89,7 +89,7 @@ class Token {
     final TokenType type;    // e.g. NUMBER, IDENTIFIER, PLUS …
     final String    lexeme;  // raw source text
     final Object    literal; // parsed value for strings & numbers
-    final int       line;    // source line — used in error messages
+    final int       line;    // source line - used in error messages
 }
 ```
 
@@ -104,9 +104,9 @@ Keywords      →  AND  CLASS  ELSE  FALSE  FOR  FXN  IF  NIL  OR  …
 
 ---
 
-### 🌲 3 — Expression AST (`Expr.java`)
+### 🌲 3 - Expression AST (`Expr.java`)
 
-The `Expr` hierarchy models every expression the parser will eventually produce. Each node is a `static` inner class of the base `Expr` type, and all share a single generic `Visitor<R>` interface — meaning any tree pass (printing, evaluation, resolution…) only needs one method per node.
+The `Expr` hierarchy models every expression the parser will eventually produce. Each node is a `static` inner class of the base `Expr` type, and all share a single generic `Visitor<R>` interface - meaning any tree pass (printing, evaluation, resolution…) only needs one method per node.
 
 | Node | Fields | Represents |
 |:---|:---|:---|
@@ -115,13 +115,13 @@ The `Expr` hierarchy models every expression the parser will eventually produce.
 | `Expr.Literal` | `value` | A number, string, `true`, `false`, or `nil` |
 | `Expr.Unary` | `operator` · `right` | Prefix ops: `-expr` or `!expr` |
 
-Each node implements `accept(Visitor<R>)` enabling **double-dispatch** — the canonical solution to the Expression Problem in statically-typed OOP.
+Each node implements `accept(Visitor<R>)` enabling **double-dispatch** - the canonical solution to the Expression Problem in statically-typed OOP.
 
 ---
 
-### 🖨️ 4 — AST Pretty-Printer (`AstPrinter.java`)
+### 🖨️ 4 - AST Pretty-Printer (`AstPrinter.java`)
 
-`AstPrinter` is the first concrete `Expr.Visitor<String>`. It walks any expression tree and returns a fully-parenthesised **S-expression** string — invaluable for verifying parser output.
+`AstPrinter` is the first concrete `Expr.Visitor<String>`. It walks any expression tree and returns a fully-parenthesised **S-expression** string - invaluable for verifying parser output.
 
 ```
 Expression built:  (-123)  *  (group 45.67)
@@ -137,7 +137,7 @@ java  com.interpreter.exon.AstPrinter
 
 ---
 
-### ⚙️ 5 — AST Code-Generation Tool (`generateAst.java`)
+### ⚙️ 5 - AST Code-Generation Tool (`generateAst.java`)
 
 Rather than hand-editing `Expr.java` every time a new node is needed, the project ships a **meta-programming tool** at `com/interpreter/tool/generateAst.java`.
 
@@ -164,19 +164,19 @@ Unary    : Token operator, Expr right
 
 ## 🚀 Running Exon
 
-### Step 1 — Compile
+### Step 1 - Compile
 
 ```bash
 javac com/interpreter/exon/*.java
 ```
 
-### Step 2 — Run a script file
+### Step 2 - Run a script file
 
 ```bash
 java com.interpreter.exon.Exon path\to\script.exon
 ```
 
-### Step 3 — Or launch the interactive REPL
+### Step 3 - Or launch the interactive REPL
 
 ```bash
 java com.interpreter.exon.Exon
@@ -197,7 +197,7 @@ java com.interpreter.exon.Exon
 |:---|:---|
 | Unexpected character in source | `[line N] Error: Unexpected character.` |
 | Unterminated string literal | `[line N] Error: Unterminated string.` |
-| Error in REPL | Error printed; **session continues** — `hadError` is reset each line |
+| Error in REPL | Error printed; **session continues** - `hadError` is reset each line |
 | Error in script file | Interpreter exits with code **65** |
 
 ---
@@ -205,13 +205,13 @@ java com.interpreter.exon.Exon
 ## 🗺️ Roadmap
 
 ```
-Phase 3 — Parser
+Phase 3 - Parser
 ```
 - [ ] Recursive descent parser consuming the token stream
 - [ ] Produce a well-formed `Expr` tree for every valid expression
 
 ```
-Phase 4 — Interpreter
+Phase 4 - Interpreter
 ```
 - [ ] Tree-walk evaluator implementing `Expr.Visitor<Object>`
 - [ ] `put` variable declarations and `out` print statements
@@ -219,14 +219,14 @@ Phase 4 — Interpreter
 - [ ] `for` and `until` loop constructs
 
 ```
-Phase 5 — Functions & Classes
+Phase 5 - Functions & Classes
 ```
 - [ ] `fxn` declarations, first-class functions, `return`
 - [ ] Closures and lexical scoping
 - [ ] `class` definitions, `this`, `super`, single inheritance
 
 ```
-Phase 6 — Standard Library
+Phase 6 - Standard Library
 ```
 - [ ] Built-in utilities for I/O, strings, and math
 
@@ -234,6 +234,6 @@ Phase 6 — Standard Library
 
 <div align="center">
 
-**Built with ❤️ — following the tree-walk interpreter tradition**
+**Built with ❤️ - following the tree-walk interpreter tradition**
 
 </div>
