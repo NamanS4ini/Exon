@@ -6,14 +6,14 @@
 
 [![Language](https://img.shields.io/badge/Language-Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://www.java.com/)
 [![Status](https://img.shields.io/badge/Status-Active%20Development-22c55e?style=for-the-badge)]()
-[![Stage](https://img.shields.io/badge/Stage-AST%20Ready-6366f1?style=for-the-badge)]()
+[![Stage](https://img.shields.io/badge/Stage-Parser%20Complete-6366f1?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-MIT-0ea5e9?style=for-the-badge)]()
 
 <br/>
 
 *Exon is a hand-built, tree-walk interpreter that compiles source text through*
-*scanning → AST construction → evaluation. The scanner and AST layer are complete;*
-*the parser and evaluator are next.*
+*scanning → parsing → AST construction → evaluation. The scanner, AST, and*
+*recursive-descent parser are complete; the tree-walk evaluator is next.*
 
 </div>
 
@@ -28,8 +28,9 @@
 | 2 | AST node definitions (`Expr`) | ✅ **Complete** |
 | 2 | Visitor pattern & `AstPrinter` | ✅ **Complete** |
 | 2 | AST code-generation tool | ✅ **Complete** |
-| 3 | Parser (tokens → AST) | 🚧 **In Progress** |
-| 4 | Interpreter / evaluator | 🔷 **Planned** |
+| 3 | Recursive-descent Parser | ✅ **Complete** |
+| 3 | Token-level error reporting | ✅ **Complete** |
+| 4 | Interpreter / evaluator | 🚧 **In Progress** |
 | 4 | Statements & declarations | 🔷 **Planned** |
 | 5 | Functions, classes, closures | 🔷 **Planned** |
 
@@ -137,6 +138,40 @@ java  com.interpreter.exon.AstPrinter
 
 ---
 
+### 🧩 6 — Recursive-Descent Parser (`Parser.java`)
+
+`Parser.java` is a hand-written **recursive-descent parser** that consumes the flat token stream produced by the scanner and builds a structured `Expr` tree.
+
+The grammar is stratified by operator precedence — lowest precedence at the top, highest at the bottom — and each rule is implemented as its own private method:
+
+```
+expression  →  equality
+equality    →  comparison  ( ( "!=" | "==" )  comparison )*
+comparison  →  term        ( ( ">" | ">=" | "<" | "<=" )  term )*
+term        →  factor      ( ( "+" | "-" )  factor )*
+factor      →  unary       ( ( "*" | "/" )  unary )*
+unary       →  ( "!" | "-" )  unary  |  primary
+primary     →  NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
+```
+
+**Key implementation details:**
+
+| Feature | Detail |
+|:---|:---|
+| Entry point | `Parser.parse()` — returns the root `Expr` or `null` on error |
+| Error type | Private `ParseError extends RuntimeException` for controlled unwinding |
+| Panic-mode recovery | `synchronize()` discards tokens until a statement boundary (`CLASS` `FOR` `FXN` `IF` `OUT` `RETURN` `PUT` `UNTIL` or `;`) |
+| Token-level errors | `Exon.error(Token, message)` reports the exact lexeme and position |
+
+**Token-level error reporting** was also added to `Exon.java` — errors now pinpoint the exact token:
+
+```
+[line 3] Error at 'pii': Expect expression.
+[line 7] Error at end: Expect ')' after expression.
+```
+
+---
+
 ### ⚙️ 5 - AST Code-Generation Tool (`generateAst.java`)
 
 Rather than hand-editing `Expr.java` every time a new node is needed, the project ships a **meta-programming tool** at `com/interpreter/tool/generateAst.java`.
@@ -205,13 +240,15 @@ java com.interpreter.exon.Exon
 ## 🗺️ Roadmap
 
 ```
-Phase 3 - Parser
+Phase 3 — Parser  ✅ Done
 ```
-- [ ] Recursive descent parser consuming the token stream
-- [ ] Produce a well-formed `Expr` tree for every valid expression
+- [x] Recursive descent parser consuming the token stream
+- [x] Full expression grammar with correct operator precedence
+- [x] Panic-mode error recovery via `synchronize()`
+- [x] Token-level error messages (lexeme + position)
 
 ```
-Phase 4 - Interpreter
+Phase 4 — Interpreter
 ```
 - [ ] Tree-walk evaluator implementing `Expr.Visitor<Object>`
 - [ ] `put` variable declarations and `out` print statements
@@ -219,14 +256,14 @@ Phase 4 - Interpreter
 - [ ] `for` and `until` loop constructs
 
 ```
-Phase 5 - Functions & Classes
+Phase 5 — Functions & Classes
 ```
 - [ ] `fxn` declarations, first-class functions, `return`
 - [ ] Closures and lexical scoping
 - [ ] `class` definitions, `this`, `super`, single inheritance
 
 ```
-Phase 6 - Standard Library
+Phase 6 — Standard Library
 ```
 - [ ] Built-in utilities for I/O, strings, and math
 
