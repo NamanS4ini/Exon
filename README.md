@@ -6,14 +6,14 @@
 
 [![Language](https://img.shields.io/badge/Language-Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://www.java.com/)
 [![Status](https://img.shields.io/badge/Status-Active%20Development-22c55e?style=for-the-badge)]()
-[![Stage](https://img.shields.io/badge/Stage-Parser%20Complete-6366f1?style=for-the-badge)]()
+[![Stage](https://img.shields.io/badge/Stage-Interpreter%20Complete-6366f1?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-MIT-0ea5e9?style=for-the-badge)]()
 
 <br/>
 
 *Exon is a hand-built, tree-walk interpreter that compiles source text through*
-*scanning → parsing → AST construction → evaluation. The scanner, AST, and*
-*recursive-descent parser are complete; the tree-walk evaluator is next.*
+*scanning → parsing → AST construction → evaluation. The scanner, AST, parser,*
+*and tree-walk evaluator are all complete. Statements & control flow are next.*
 
 </div>
 
@@ -30,9 +30,11 @@
 | 2 | AST code-generation tool | ✅ **Complete** |
 | 3 | Recursive-descent Parser | ✅ **Complete** |
 | 3 | Token-level error reporting | ✅ **Complete** |
-| 4 | Interpreter / evaluator | 🚧 **In Progress** |
-| 4 | Statements & declarations | 🔷 **Planned** |
-| 5 | Functions, classes, closures | 🔷 **Planned** |
+| 4 | Tree-walk Interpreter (`Interpreter.java`) | ✅ **Complete** |
+| 4 | Runtime error handling (`RuntimeError`) | ✅ **Complete** |
+| 5 | Statements & declarations | 🚧 **In Progress** |
+| 5 | Variables, scope, environments | 🔷 **Planned** |
+| 6 | Functions, classes, closures | 🔷 **Planned** |
 
 ---
 
@@ -43,12 +45,15 @@ Exon/
 └── com/
     └── interpreter/
         ├── exon/                    ← Core interpreter package
-        │   ├── Exon.java            ← Entry point - file runner & REPL
+        │   ├── Exon.java            ← Entry point — file runner & REPL
         │   ├── Scanner.java         ← Lexer: source text → token stream
         │   ├── Token.java           ← Token value object
         │   ├── TokenType.java       ← Enum of every token type
         │   ├── Expr.java            ← AST node hierarchy (auto-generated)
-        │   └── AstPrinter.java      ← Visitor: pretty-prints the AST
+        │   ├── AstPrinter.java      ← Visitor: pretty-prints the AST
+        │   ├── Parser.java          ← Recursive-descent parser
+        │   ├── Interpreter.java     ← Tree-walk evaluator
+        │   └── RuntimeError.java    ← Runtime exception with token context
         └── tool/
             └── generateAst.java     ← Code-gen tool that writes Expr.java
 ```
@@ -172,7 +177,40 @@ primary     →  NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
 
 ---
 
-### ⚙️ 5 - AST Code-Generation Tool (`generateAst.java`)
+### 🖥️ 7 — Tree-Walk Interpreter (`Interpreter.java` + `RuntimeError.java`)
+
+`Interpreter.java` is the execution engine. It implements `Expr.Visitor<Object>` and walks the AST produced by the parser, computing a Java `Object` for every node.
+
+**Supported operations:**
+
+| Operation | Behaviour |
+|:---|:---|
+| **Literals** | Numbers (`Double`), strings (`String`), `true`/`false` (`Boolean`), `nil` (`null`) |
+| **Grouping** | Evaluates the inner expression transparently |
+| **Unary `-`** | Negates a number; throws `RuntimeError` if operand is not a number |
+| **Unary `!`** | Logical NOT — `nil` and `false` are falsy, everything else is truthy |
+| **Arithmetic** `+ - * /` | Operates on two numbers; `+` also concatenates two strings |
+| **Comparison** `> >= < <=` | Compares two numbers, returns a boolean |
+| **Equality** `== !=` | Works on any two values; `nil` is only equal to `nil` |
+
+**Output formatting (`stringify`):** integers are printed without a trailing `.0` (e.g. `5` not `5.0`); `nil` prints as `nil`.
+
+`RuntimeError.java` is a thin `RuntimeException` subclass that carries the offending `Token`, enabling precise line-level runtime error messages:
+
+```
+Operand must be a number.
+[line 4]
+```
+
+`Exon.java` was updated with:
+- A static `Interpreter` instance shared across all `run()` calls
+- A `hadRuntimeError` flag that causes script files to exit with code **70**
+- A `RuntimeError(RuntimeError)` handler method that prints the message + line
+- The full pipeline is now **scan → parse → interpret** (plus AST print for debugging)
+
+---
+
+### ⚙️ 5 — AST Code-Generation Tool (`generateAst.java`)
 
 Rather than hand-editing `Expr.java` every time a new node is needed, the project ships a **meta-programming tool** at `com/interpreter/tool/generateAst.java`.
 
@@ -228,12 +266,17 @@ java com.interpreter.exon.Exon
 
 ## 🛡️ Error Handling
 
-| Scenario | Behaviour |
-|:---|:---|
-| Unexpected character in source | `[line N] Error: Unexpected character.` |
-| Unterminated string literal | `[line N] Error: Unterminated string.` |
-| Error in REPL | Error printed; **session continues** - `hadError` is reset each line |
-| Error in script file | Interpreter exits with code **65** |
+| Scenario | Behaviour | Exit code |
+|:---|:---|:---:|
+| Unexpected character in source | `[line N] Error: Unexpected character.` | — |
+| Unterminated string literal | `[line N] Error: Unterminated string.` | — |
+| Parse error (bad syntax) | `[line N] Error at '<token>': <message>` | — |
+| Parse error at EOF | `[line N] Error at end: <message>` | — |
+| Runtime type error | `<message>\n[line N]` | — |
+| Scan/parse error in script | Exits immediately after reporting | **65** |
+| Runtime error in script | Exits after the failing expression | **70** |
+| REPL scan/parse error | Error printed; **session continues** (`hadError` reset) | — |
+| REPL runtime error | Error printed; **session continues** | — |
 
 ---
 
@@ -248,12 +291,24 @@ Phase 3 — Parser  ✅ Done
 - [x] Token-level error messages (lexeme + position)
 
 ```
-Phase 4 — Interpreter
+Phase 4 — Interpreter  ✅ Done
 ```
-- [ ] Tree-walk evaluator implementing `Expr.Visitor<Object>`
-- [ ] `put` variable declarations and `out` print statements
+- [x] Tree-walk evaluator implementing `Expr.Visitor<Object>`
+- [x] Arithmetic, comparison, equality, logical operators
+- [x] String concatenation with `+`
+- [x] Truthiness rules (`nil` and `false` are falsy)
+- [x] Runtime type checking with `RuntimeError`
+- [x] Script exit code **70** on runtime errors
+
+```
+Phase 5 — Statements & Control Flow
+```
+- [ ] `out` print statement
+- [ ] Expression statements (`;` terminated)
+- [ ] `put` variable declarations
 - [ ] `if` / `else` branching
 - [ ] `for` and `until` loop constructs
+- [ ] Block scoping with environments
 
 ```
 Phase 5 — Functions & Classes
