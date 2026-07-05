@@ -16,7 +16,7 @@ endif
 rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 SOURCES := $(call rwildcard,com/,*.java)
 
-.PHONY: all compile run clean rebuild
+.PHONY: all compile run clean rebuild generateast
 
 all: run
 
@@ -26,6 +26,9 @@ compile: $(SOURCES)
 
 run: compile
 	$(JAVA) -cp $(BUILD_DIR) $(MAIN_CLASS) $(ARGS)
+
+generateast: compile
+	$(JAVA) -cp $(BUILD_DIR) com.interpreter.tool.generateAst com/interpreter/exon
 
 clean:
 	@$(RMDIR_BUILD)

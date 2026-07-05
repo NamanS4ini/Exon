@@ -19,6 +19,10 @@ public class generateAst {
                 "Grouping : Expr expression",
                 "Literal : Object value",
                 "Unary : Token operator, Expr right"));
+                
+        defineAst(outputDir, "Stmt", Arrays.asList(
+                "Expression : Expr expression",
+                "Out         : Expr expression"));
     }
 
     private static void defineAst(String outputDir, String baseName, List<String> types) throws IOException {
@@ -34,14 +38,14 @@ public class generateAst {
 
         defineVisitor(writer, baseName, types);
 
-        //* AST classes.
+        // * AST classes.
         for (String type : types) {
             String className = type.split(":")[0].trim();
             String fields = type.split(":")[1].trim();
             defineType(writer, baseName, className, fields);
         }
 
-        //* base accept method:
+        // * base accept method:
         writer.println();
         writer.println("    abstract <R> R accept(Visitor<R> visitor);");
 
@@ -61,7 +65,7 @@ public class generateAst {
     private static void defineType(PrintWriter writer, String baseName, String className, String fieldList) {
         writer.println(" static class " + className + " extends " + baseName + "{");
 
-        //* Constructor
+        // * Constructor
 
         writer.println("    " + className + "(" + fieldList + ") {");
         String[] fields = fieldList.split(", ");
@@ -72,7 +76,7 @@ public class generateAst {
 
         writer.println("    }");
 
-        //* vsisitor pattern
+        // * vsisitor pattern
         writer.println();
         writer.println("    @Override");
         writer.println("    <R> R accept(Visitor<R> visitor) {");
