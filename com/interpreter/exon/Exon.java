@@ -58,7 +58,6 @@ public class Exon {
         if (hadError)
             return;
         interpreter.interpret(expression);
-        System.out.println(new AstPrinter().print(expression));
     }
 
     static void error(int line, String message) {
