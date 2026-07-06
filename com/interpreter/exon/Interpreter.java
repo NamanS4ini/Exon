@@ -1,19 +1,22 @@
 package com.interpreter.exon;
 
+import java.util.List;
+
 import com.interpreter.exon.Expr.Binary;
 import com.interpreter.exon.Expr.Grouping;
 import com.interpreter.exon.Expr.Literal;
 import com.interpreter.exon.Expr.Unary;
 
-public class Interpreter implements Expr.Visitor<Object> {
+public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
 
-    void interpret(Expr expression) {
+    void interpret(List<Stmt> statements) {
         try {
-            Object value = evaluate(expression);
-            System.out.println(stringify(value));
-        } catch (RuntimeError e) {
-            Exon.RuntimeError(e);
+            for (Stmt statemet : statements) {
+                execute(statemet);
+            }
+        } catch (RuntimeError error) {
+            Exon.RuntimeError(error);
         }
     }
 
@@ -29,6 +32,22 @@ public class Interpreter implements Expr.Visitor<Object> {
 
     private Object evaluate(Expr expr) {
         return expr.accept(this);
+    }
+
+    private void execute(Stmt stmt) {
+        stmt.accept(this);
+    }
+
+    @Override
+    public Void visitExpressionStmt(Stmt.Expression stmt) {
+        evaluate(stmt.expression);
+        return null;
+    }
+    @Override
+    public Void visitOutStmt(Stmt.Out stmt) {
+        Object value = evaluate(stmt.expression);
+        System.out.println(stringify(value));
+        return null;
     }
 
     @Override
