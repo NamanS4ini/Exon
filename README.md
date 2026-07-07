@@ -11,10 +11,10 @@
 
 <br/>
 
-*Exon is a hand-built, tree-walk interpreter that compiles source text through*
-*scanning → parsing → AST construction → evaluation. The scanner, AST, parser,*
-*evaluator, and first statements (`out`, expression stmts) are complete.*
-*Variable declarations, control flow, and scoping are next.*
+_Exon is a hand-built, tree-walk interpreter that compiles source text through_
+_scanning → parsing → AST construction → evaluation. The scanner, AST, parser,_
+_evaluator, and first statements (`out`, expression stmts) are complete._
+_Variable declarations, control flow, and scoping are next._
 
 </div>
 
@@ -22,23 +22,23 @@
 
 ## 📊 Build Progress
 
-| Phase | Component | Status |
-|:---:|:---|:---:|
-| 1 | Lexical Scanner | ✅ **Complete** |
-| 1 | Token types & keyword map | ✅ **Complete** |
-| 2 | AST node definitions (`Expr`) | ✅ **Complete** |
-| 2 | Visitor pattern & `AstPrinter` | ✅ **Complete** |
-| 2 | AST code-generation tool | ✅ **Complete** |
-| 3 | Recursive-descent Parser | ✅ **Complete** |
-| 3 | Token-level error reporting | ✅ **Complete** |
-| 4 | Tree-walk Interpreter (`Interpreter.java`) | ✅ **Complete** |
-| 4 | Runtime error handling (`RuntimeError`) | ✅ **Complete** |
-| 5 | Statement AST (`Stmt.java`) | ✅ **Complete** |
-| 5 | `out` print statement | ✅ **Complete** |
-| 5 | Expression statements (`;`) | ✅ **Complete** |
-| 6 | `put` variable declarations & environments | 🚧 **In Progress** |
-| 6 | `if` / `else`, `for`, `until` control flow | 🔷 **Planned** |
-| 7 | Functions, classes, closures | 🔷 **Planned** |
+| Phase | Component                                  |       Status       |
+| :---: | :----------------------------------------- | :----------------: |
+|   1   | Lexical Scanner                            |  ✅ **Complete**   |
+|   1   | Token types & keyword map                  |  ✅ **Complete**   |
+|   2   | AST node definitions (`Expr`)              |  ✅ **Complete**   |
+|   2   | Visitor pattern & `AstPrinter`             |  ✅ **Complete**   |
+|   2   | AST code-generation tool                   |  ✅ **Complete**   |
+|   3   | Recursive-descent Parser                   |  ✅ **Complete**   |
+|   3   | Token-level error reporting                |  ✅ **Complete**   |
+|   4   | Tree-walk Interpreter (`Interpreter.java`) |  ✅ **Complete**   |
+|   4   | Runtime error handling (`RuntimeError`)    |  ✅ **Complete**   |
+|   5   | Statement AST (`Stmt.java`)                |  ✅ **Complete**   |
+|   5   | `out` print statement                      |  ✅ **Complete**   |
+|   5   | Expression statements (`;`)                |  ✅ **Complete**   |
+|   6   | `set` variable declarations & environments | 🚧 **In Progress** |
+|   6   | `if` / `else`, `for`, `loop` control flow  |   🔷 **Planned**   |
+|   7   | Functions, classes, closures               |   🔷 **Planned**   |
 
 ---
 
@@ -74,20 +74,20 @@ Exon/
 <details>
 <summary><b>Token categories recognised</b></summary>
 
-| Category | Tokens |
-|:---|:---|
-| Single-character symbols | `(` `)` `{` `}` `,` `.` `-` `+` `;` `*` `/` |
-| One/two-character operators | `!` `!=` `=` `==` `<` `<=` `>` `>=` |
-| String literals | `"hello, world"` - supports multi-line strings |
-| Number literals | `42` · `3.14` - integers and decimals |
-| Identifiers | `myVar` · `_count` |
-| Line comments | `// anything to end of line` |
-| Keywords | `and` `class` `else` `false` `for` `fxn` `if` `nil` `or` `out` `put` `return` `super` `this` `true` `until` |
+| Category                    | Tokens                                                                                                     |
+| :-------------------------- | :--------------------------------------------------------------------------------------------------------- |
+| Single-character symbols    | `(` `)` `{` `}` `,` `.` `-` `+` `;` `*` `/`                                                                |
+| One/two-character operators | `!` `!=` `=` `==` `<` `<=` `>` `>=`                                                                        |
+| String literals             | `"hello, world"` - supports multi-line strings                                                             |
+| Number literals             | `42` · `3.14` - integers and decimals                                                                      |
+| Identifiers                 | `myVar` · `_count`                                                                                         |
+| Line comments               | `// anything to end of line`                                                                               |
+| Keywords                    | `and` `class` `else` `false` `for` `fxn` `if` `nil` `or` `out` `set` `return` `super` `this` `true` `loop` |
 
 </details>
 
 > [!NOTE]
-> Keywords are resolved *after* a full identifier is consumed - the scanner checks the final string against a `HashMap<String, TokenType>`. Unknown characters and unterminated strings both emit a line-aware error: `[line N] Error: <message>`.
+> Keywords are resolved _after_ a full identifier is consumed - the scanner checks the final string against a `HashMap<String, TokenType>`. Unknown characters and unterminated strings both emit a line-aware error: `[line N] Error: <message>`.
 
 ---
 
@@ -119,12 +119,12 @@ Keywords      →  AND  CLASS  ELSE  FALSE  FOR  FXN  IF  NIL  OR  …
 
 The `Expr` hierarchy models every expression the parser will eventually produce. Each node is a `static` inner class of the base `Expr` type, and all share a single generic `Visitor<R>` interface - meaning any tree pass (printing, evaluation, resolution…) only needs one method per node.
 
-| Node | Fields | Represents |
-|:---|:---|:---|
-| `Expr.Binary` | `left` · `operator` · `right` | Infix ops: `+` `-` `*` `/` `==` `!=` `<` `<=` `>` `>=` |
-| `Expr.Grouping` | `expression` | Parenthesised sub-expression `(expr)` |
-| `Expr.Literal` | `value` | A number, string, `true`, `false`, or `nil` |
-| `Expr.Unary` | `operator` · `right` | Prefix ops: `-expr` or `!expr` |
+| Node            | Fields                        | Represents                                             |
+| :-------------- | :---------------------------- | :----------------------------------------------------- |
+| `Expr.Binary`   | `left` · `operator` · `right` | Infix ops: `+` `-` `*` `/` `==` `!=` `<` `<=` `>` `>=` |
+| `Expr.Grouping` | `expression`                  | Parenthesised sub-expression `(expr)`                  |
+| `Expr.Literal`  | `value`                       | A number, string, `true`, `false`, or `nil`            |
+| `Expr.Unary`    | `operator` · `right`          | Prefix ops: `-expr` or `!expr`                         |
 
 Each node implements `accept(Visitor<R>)` enabling **double-dispatch** - the canonical solution to the Expression Problem in statically-typed OOP.
 
@@ -166,12 +166,12 @@ primary     →  NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
 
 **Key implementation details:**
 
-| Feature | Detail |
-|:---|:---|
-| Entry point | `Parser.parse()` — returns the root `Expr` or `null` on error |
-| Error type | Private `ParseError extends RuntimeException` for controlled unwinding |
-| Panic-mode recovery | `synchronize()` discards tokens until a statement boundary (`CLASS` `FOR` `FXN` `IF` `OUT` `RETURN` `PUT` `UNTIL` or `;`) |
-| Token-level errors | `Exon.error(Token, message)` reports the exact lexeme and position |
+| Feature             | Detail                                                                                                                   |
+| :------------------ | :----------------------------------------------------------------------------------------------------------------------- |
+| Entry point         | `Parser.parse()` — returns the root `Expr` or `null` on error                                                            |
+| Error type          | Private `ParseError extends RuntimeException` for controlled unwinding                                                   |
+| Panic-mode recovery | `synchronize()` discards tokens until a statement boundary (`CLASS` `FOR` `FXN` `IF` `OUT` `RETURN` `SET` `LOOP` or `;`) |
+| Token-level errors  | `Exon.error(Token, message)` reports the exact lexeme and position                                                       |
 
 **Token-level error reporting** was also added to `Exon.java` — errors now pinpoint the exact token:
 
@@ -188,15 +188,15 @@ primary     →  NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
 
 **Supported operations:**
 
-| Operation | Behaviour |
-|:---|:---|
-| **Literals** | Numbers (`Double`), strings (`String`), `true`/`false` (`Boolean`), `nil` (`null`) |
-| **Grouping** | Evaluates the inner expression transparently |
-| **Unary `-`** | Negates a number; throws `RuntimeError` if operand is not a number |
-| **Unary `!`** | Logical NOT — `nil` and `false` are falsy, everything else is truthy |
-| **Arithmetic** `+ - * /` | Operates on two numbers; `+` also concatenates two strings |
-| **Comparison** `> >= < <=` | Compares two numbers, returns a boolean |
-| **Equality** `== !=` | Works on any two values; `nil` is only equal to `nil` |
+| Operation                  | Behaviour                                                                          |
+| :------------------------- | :--------------------------------------------------------------------------------- |
+| **Literals**               | Numbers (`Double`), strings (`String`), `true`/`false` (`Boolean`), `nil` (`null`) |
+| **Grouping**               | Evaluates the inner expression transparently                                       |
+| **Unary `-`**              | Negates a number; throws `RuntimeError` if operand is not a number                 |
+| **Unary `!`**              | Logical NOT — `nil` and `false` are falsy, everything else is truthy               |
+| **Arithmetic** `+ - * /`   | Operates on two numbers; `+` also concatenates two strings                         |
+| **Comparison** `> >= < <=` | Compares two numbers, returns a boolean                                            |
+| **Equality** `== !=`       | Works on any two values; `nil` is only equal to `nil`                              |
 
 **Output formatting (`stringify`):** integers are printed without a trailing `.0` (e.g. `5` not `5.0`); `nil` prints as `nil`.
 
@@ -208,6 +208,7 @@ Operand must be a number.
 ```
 
 `Exon.java` was updated with:
+
 - A static `Interpreter` instance shared across all `run()` calls
 - A `hadRuntimeError` flag that causes script files to exit with code **70**
 - A `RuntimeError(RuntimeError)` handler method that prints the message + line
@@ -219,19 +220,21 @@ Operand must be a number.
 
 ### 📜 8 — Statements (`Stmt.java`)
 
-`Stmt.java` mirrors `Expr.java` but for *statements* — side-effecting constructs that don't produce a value. It follows the same auto-generated Visitor pattern.
+`Stmt.java` mirrors `Expr.java` but for _statements_ — side-effecting constructs that don't produce a value. It follows the same auto-generated Visitor pattern.
 
-| Node | Fields | Represents |
-|:---|:---|:---|
-| `Stmt.Expression` | `expression` | An expression evaluated for its side effects, terminated by `;` |
-| `Stmt.Out` | `expression` | The `out` keyword — evaluates the expression and prints the result |
+| Node              | Fields       | Represents                                                         |
+| :---------------- | :----------- | :----------------------------------------------------------------- |
+| `Stmt.Expression` | `expression` | An expression evaluated for its side effects, terminated by `;`    |
+| `Stmt.Out`        | `expression` | The `out` keyword — evaluates the expression and prints the result |
 
 **Parser changes:**
+
 - `parse()` now returns `List<Stmt>` (previously returned a single `Expr`)
 - New `statement()` dispatch: matches `out` → `printStatement()`, otherwise → `expressionStatement()`
 - Both statement parsers require a trailing `;` and report errors if missing
 
 **Interpreter changes:**
+
 - Now implements `Stmt.Visitor<Void>` in addition to `Expr.Visitor<Object>`
 - `visitExpressionStmt` — evaluates the expression and discards the result
 - `visitOutStmt` — evaluates and calls `System.out.println(stringify(value))`
@@ -293,27 +296,27 @@ java com.interpreter.exon.Exon
 ```
 
 ```
-/> put x = 42;
+/> set x = 42;
 /> out x + 1;
 ```
 
-> The REPL prompt is `/>`. Press **Ctrl-Z** *(Windows)* or **Ctrl-D** *(Unix)* to exit.
+> The REPL prompt is `/>`. Press **Ctrl-Z** _(Windows)_ or **Ctrl-D** _(Unix)_ to exit.
 
 ---
 
 ## 🛡️ Error Handling
 
-| Scenario | Behaviour | Exit code |
-|:---|:---|:---:|
-| Unexpected character in source | `[line N] Error: Unexpected character.` | — |
-| Unterminated string literal | `[line N] Error: Unterminated string.` | — |
-| Parse error (bad syntax) | `[line N] Error at '<token>': <message>` | — |
-| Parse error at EOF | `[line N] Error at end: <message>` | — |
-| Runtime type error | `<message>\n[line N]` | — |
-| Scan/parse error in script | Exits immediately after reporting | **65** |
-| Runtime error in script | Exits after the failing expression | **70** |
-| REPL scan/parse error | Error printed; **session continues** (`hadError` reset) | — |
-| REPL runtime error | Error printed; **session continues** | — |
+| Scenario                       | Behaviour                                               | Exit code |
+| :----------------------------- | :------------------------------------------------------ | :-------: |
+| Unexpected character in source | `[line N] Error: Unexpected character.`                 |     —     |
+| Unterminated string literal    | `[line N] Error: Unterminated string.`                  |     —     |
+| Parse error (bad syntax)       | `[line N] Error at '<token>': <message>`                |     —     |
+| Parse error at EOF             | `[line N] Error at end: <message>`                      |     —     |
+| Runtime type error             | `<message>\n[line N]`                                   |     —     |
+| Scan/parse error in script     | Exits immediately after reporting                       |  **65**   |
+| Runtime error in script        | Exits after the failing expression                      |  **70**   |
+| REPL scan/parse error          | Error printed; **session continues** (`hadError` reset) |     —     |
+| REPL runtime error             | Error printed; **session continues**                    |     —     |
 
 ---
 
@@ -322,6 +325,7 @@ java com.interpreter.exon.Exon
 ```
 Phase 3 — Parser  ✅ Done
 ```
+
 - [x] Recursive descent parser consuming the token stream
 - [x] Full expression grammar with correct operator precedence
 - [x] Panic-mode error recovery via `synchronize()`
@@ -330,6 +334,7 @@ Phase 3 — Parser  ✅ Done
 ```
 Phase 4 — Interpreter  ✅ Done
 ```
+
 - [x] Tree-walk evaluator implementing `Expr.Visitor<Object>`
 - [x] Arithmetic, comparison, equality, logical operators
 - [x] String concatenation with `+`
@@ -340,6 +345,7 @@ Phase 4 — Interpreter  ✅ Done
 ```
 Phase 5 — Statements  ✅ Done
 ```
+
 - [x] `Stmt` AST hierarchy with Visitor pattern
 - [x] `out` print statement
 - [x] Expression statements (`;` terminated)
@@ -349,15 +355,17 @@ Phase 5 — Statements  ✅ Done
 ```
 Phase 6 — Variables & Control Flow
 ```
-- [ ] `put` variable declarations
+
+- [ ] `set` variable declarations
 - [ ] Environment for variable storage & lookup
 - [ ] Block scoping `{ ... }`
 - [ ] `if` / `else` branching
-- [ ] `for` and `until` loop constructs
+- [ ] `for` and `loop` loop constructs
 
 ```
 Phase 7 — Functions & Classes
 ```
+
 - [ ] `fxn` declarations, first-class functions, `return`
 - [ ] Closures and lexical scoping
 - [ ] `class` definitions, `this`, `super`, single inheritance
@@ -365,6 +373,7 @@ Phase 7 — Functions & Classes
 ```
 Phase 6 — Standard Library
 ```
+
 - [ ] Built-in utilities for I/O, strings, and math
 
 ---

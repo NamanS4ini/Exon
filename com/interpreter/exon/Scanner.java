@@ -31,8 +31,8 @@ class Scanner {
         keywords.put("super", SUPER);
         keywords.put("this", THIS);
         keywords.put("true", TRUE);
-        keywords.put("put", PUT);
-        keywords.put("until", UNTIL);
+        keywords.put("set", SET);
+        keywords.put("loop", LOOP);
     }
 
     private boolean isAtEnd() {
@@ -193,7 +193,7 @@ class Scanner {
             Exon.error(line, "Unterminated string.");
             return;
         }
-        advance(); // *  for closing '"'
+        advance(); // * for closing '"'
         String value = source.substring(start + 1, current - 1);
         addToken(STRING, value);
     }

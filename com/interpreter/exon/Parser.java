@@ -5,7 +5,9 @@ import java.util.List;
 import static com.interpreter.exon.TokenType.*;
 
 class Parser {
-    private static class ParseError extends RuntimeException {}
+    private static class ParseError extends RuntimeException {
+    }
+
     private final List<Token> tokens;
     private int current = 0;
 
@@ -36,6 +38,7 @@ class Parser {
         consume(SEMICOLON, "Expect ';' after value.");
         return new Stmt.Out(value);
     }
+
     private Stmt expressionStatement() {
         Expr expr = expression();
         consume(SEMICOLON, "Expect ';' after expression.");
@@ -61,7 +64,7 @@ class Parser {
         }
         return expr;
     }
-    
+
     private Expr term() {
         Expr expr = factor();
         while (match(PLUS, MINUS)) {
@@ -91,7 +94,6 @@ class Parser {
         return primary();
     }
 
-
     private Expr primary() {
         if (match(FALSE))
             return new Expr.Literal(false);
@@ -108,11 +110,10 @@ class Parser {
             consume(RIGHT_PAREN, "Expect ') after expression.");
             return new Expr.Grouping(expr);
         }
-        
-        throw error(peek(), "Expect expression.");
-        
-    }
 
+        throw error(peek(), "Expect expression.");
+
+    }
 
     private boolean match(TokenType... types) {
         for (TokenType type : types) {
@@ -153,7 +154,7 @@ class Parser {
     private Token previous() {
         return tokens.get(current - 1);
     }
-    
+
     private ParseError error(Token token, String message) {
         Exon.error(token, message);
         return new ParseError();
@@ -165,7 +166,14 @@ class Parser {
             if (previous().type == SEMICOLON)
                 return;
             switch (peek().type) {
-                case CLASS: case FOR: case FXN: case IF: case OUT: case RETURN: case PUT: case UNTIL:
+                case CLASS:
+                case FOR:
+                case FXN:
+                case IF:
+                case OUT:
+                case RETURN:
+                case SET:
+                case LOOP:
                     return;
             }
             advance();
