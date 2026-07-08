@@ -380,6 +380,6 @@ Phase 6 — Standard Library
 
 <div align="center">
 
-**Built with ❤️ - following the tree-walk interpreter tradition**
+**Built with ❤️ by Naman Saini - following the tree-walk interpreter tradition**
 
 </div>
