@@ -18,13 +18,34 @@ class Parser {
     List<Stmt> parse() {
         List<Stmt> statements = new ArrayList<>();
         while (!isAtEnd()) {
-            statements.add(statement());
+            statements.add(declaration());
         }
         return statements;
     }
 
     private Expr expression() {
         return equality();
+    }
+
+    private Stmt declaration() {
+        try {
+            if (match(SET))
+                return varDeclaration();
+            return statement();
+        } catch (ParseError error) {
+            synchronize();
+            return null;
+        }
+    }
+    
+    private Stmt varDeclaration() {
+        Token name = consume(IDENTIFIER, "Expect variable name.");
+        Expr initializer = null;
+        if (match(EQUAL)) {
+            initializer = expression();
+        }
+        consume(SEMICOLON, "Expect ';' after variable declaration.");
+        return new Stmt.Set(name, initializer);
     }
 
     private Stmt statement() {
@@ -58,9 +79,9 @@ class Parser {
     private Expr comparison() {
         Expr expr = term();
         while (match(GREATER, GREATER_EQUAL, LESS, LESS_EQUAL)) {
-            Token opearator = previous();
+            Token operator = previous();
             Expr right = term();
-            expr = new Expr.Binary(expr, opearator, right);
+            expr = new Expr.Binary(expr, operator, right);
         }
         return expr;
     }
@@ -68,9 +89,9 @@ class Parser {
     private Expr term() {
         Expr expr = factor();
         while (match(PLUS, MINUS)) {
-            Token opearator = previous();
+            Token operator = previous();
             Expr right = factor();
-            expr = new Expr.Binary(expr, opearator, right);
+            expr = new Expr.Binary(expr, operator, right);
         }
         return expr;
     }
@@ -78,9 +99,9 @@ class Parser {
     private Expr factor() {
         Expr expr = unary();
         while (match(STAR, SLASH)) {
-            Token opearator = previous();
+            Token operator = previous();
             Expr right = unary();
-            expr = new Expr.Binary(expr, opearator, right);
+            expr = new Expr.Binary(expr, operator, right);
         }
         return expr;
     }
@@ -105,6 +126,11 @@ class Parser {
         if (match(NUMBER, STRING)) {
             return new Expr.Literal(previous().literal);
         }
+
+        if (match(IDENTIFIER)) {
+            return new Expr.Variable(previous());
+        }
+
         if (match(LEFT_PAREN)) {
             Expr expr = expression();
             consume(RIGHT_PAREN, "Expect ') after expression.");

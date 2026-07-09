@@ -6,14 +6,17 @@ import com.interpreter.exon.Expr.Binary;
 import com.interpreter.exon.Expr.Grouping;
 import com.interpreter.exon.Expr.Literal;
 import com.interpreter.exon.Expr.Unary;
+import com.interpreter.exon.Stmt.Set;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
 
+    private Environment environment = new Environment();
+
     void interpret(List<Stmt> statements) {
         try {
-            for (Stmt statemet : statements) {
-                execute(statemet);
+            for (Stmt statement : statements) {
+                execute(statement);
             }
         } catch (RuntimeError error) {
             Exon.RuntimeError(error);
@@ -48,6 +51,21 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         Object value = evaluate(stmt.expression);
         System.out.println(stringify(value));
         return null;
+    }
+
+    @Override
+    public Void visitSetStmt(Stmt.Set stmt) {
+        Object value = null;
+        if (stmt.initializer != null) {
+            value = evaluate(stmt.initializer);
+        }
+        environment.define(stmt.name.lexeme, value);
+        return null;
+    }
+
+    @Override
+    public Object visitVariableExpr(Expr.Variable expr) {
+        return environment.get(expr.name);
     }
 
     @Override
@@ -102,7 +120,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     return (double) left + (double) right;
                 if (left instanceof String && right instanceof String)
                     return (String) left + (String) right;
-                throw new RuntimeError(expr.operator, "Operands must be two numbers or tow strings."); 
+                throw new RuntimeError(expr.operator, "Operands must be two numbers or two strings."); 
 
             case SLASH:
                 checkNumberOperands(expr.operator, left, right);
