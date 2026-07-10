@@ -1,5 +1,7 @@
 package com.interpreter.exon;
 
+import com.interpreter.exon.Expr.Assign;
+import com.interpreter.exon.Expr.Variable;
 
 class AstPrinter implements Expr.Visitor<String> {
     
@@ -13,6 +15,18 @@ class AstPrinter implements Expr.Visitor<String> {
         return parenthesize(expr.operator.lexeme, expr.left, expr.right);
     }
 
+
+    @Override
+    public String visitAssignExpr(Assign expr) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String visitVariableExpr(Variable expr) {
+        // TODO Auto-generated method stub
+        return null;
+    }
 
     @Override
     public String visitGroupingExpr(Expr.Grouping expr) {

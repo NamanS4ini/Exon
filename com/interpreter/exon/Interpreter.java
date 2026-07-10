@@ -7,6 +7,7 @@ import com.interpreter.exon.Expr.Binary;
 import com.interpreter.exon.Expr.Grouping;
 import com.interpreter.exon.Expr.Literal;
 import com.interpreter.exon.Expr.Unary;
+import com.interpreter.exon.Stmt.Block;
 import com.interpreter.exon.Stmt.Set;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
@@ -43,6 +44,24 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitBlockStmt(Block stmt) {
+        executeBlock(stmt.statements, new Environment(environment));
+        return null;
+    }
+
+    void executeBlock(List<Stmt> statements, Environment environment) {
+        Environment previous = this.environment;
+        try {
+            this.environment = environment;
+            for (Stmt statement : statements) {
+                execute(statement);
+            }
+        } finally {
+            this.environment = previous;
+        }
+    }
+
+    @Override
     public Void visitExpressionStmt(Stmt.Expression stmt) {
         evaluate(stmt.expression);
         return null;
@@ -68,7 +87,8 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     public Object visitAssignExpr(Assign expr) {
         Object value = evaluate(expr.value);
         environment.assign(expr.name, value);
-        return va   }
+        return value;
+    }
 
     @Override
     public Object visitVariableExpr(Expr.Variable expr) {

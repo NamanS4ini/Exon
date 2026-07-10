@@ -25,7 +25,8 @@ public class generateAst {
         defineAst(outputDir, "Stmt", Arrays.asList(
                 "Expression : Expr expression",
                 "Out         : Expr expression",
-                "Set         : Token name, Expr initializer"));
+                "Set         : Token name, Expr initializer",
+                "Block       : List<Stmt> statements"));
     }
 
     private static void defineAst(String outputDir, String baseName, List<String> types) throws IOException {
