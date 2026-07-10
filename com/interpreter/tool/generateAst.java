@@ -19,6 +19,7 @@ public class generateAst {
                 "Grouping : Expr expression",
                 "Literal : Object value",
                 "Unary : Token operator, Expr right",
+                "Assign : Token name, Expr value",
                 "Variable: Token name"));
                 
         defineAst(outputDir, "Stmt", Arrays.asList(
