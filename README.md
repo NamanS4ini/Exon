@@ -6,15 +6,15 @@
 
 [![Language](https://img.shields.io/badge/Language-Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://www.java.com/)
 [![Status](https://img.shields.io/badge/Status-Active%20Development-22c55e?style=for-the-badge)]()
-[![Stage](https://img.shields.io/badge/Stage-Statements%20Complete-6366f1?style=for-the-badge)]()
+[![Stage](https://img.shields.io/badge/Stage-Variables%20%26%20Scope%20Complete-6366f1?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-MIT-0ea5e9?style=for-the-badge)]()
 
 <br/>
 
 _Exon is a hand-built, tree-walk interpreter that compiles source text through_
-_scanning → parsing → AST construction → evaluation. The scanner, AST, parser,_
-_evaluator, and first statements (`out`, expression stmts) are complete._
-_Variable declarations, control flow, and scoping are next._
+_scanning → parsing → AST construction → evaluation. Scanner, AST, parser,_
+_evaluator, statements, variables, assignment, and block scoping are all complete._
+_Control flow (`if`/`else`, loops) is next._
 
 </div>
 
@@ -36,9 +36,12 @@ _Variable declarations, control flow, and scoping are next._
 |   5   | Statement AST (`Stmt.java`)                |  ✅ **Complete**   |
 |   5   | `out` print statement                      |  ✅ **Complete**   |
 |   5   | Expression statements (`;`)                |  ✅ **Complete**   |
-|   6   | `set` variable declarations & environments | 🚧 **In Progress** |
-|   6   | `if` / `else`, `for`, `loop` control flow  |   🔷 **Planned**   |
-|   7   | Functions, classes, closures               |   🔷 **Planned**   |
+|   6   | `set` variable declarations                | ✅ **Complete**    |
+|   6   | Variable assignment expressions            | ✅ **Complete**    |
+|   6   | `Environment` (variable storage & lookup)  | ✅ **Complete**    |
+|   6   | Block scoping `{ ... }`                    | ✅ **Complete**    |
+|   7   | `if` / `else`, `for`, `loop` control flow  |   🔷 **Planned**   |
+|   8   | Functions, classes, closures               |   🔷 **Planned**   |
 
 ---
 
@@ -58,6 +61,7 @@ Exon/
         │   ├── Parser.java          ← Recursive-descent parser
         │   ├── Interpreter.java     ← Tree-walk evaluator
         │   ├── Stmt.java            ← Statement AST node hierarchy
+        │   ├── Environment.java     ← Variable storage with lexical scoping
         │   └── RuntimeError.java    ← Runtime exception with token context
         └── tool/
             └── generateAst.java     ← Code-gen tool that writes Expr.java
@@ -119,12 +123,14 @@ Keywords      →  AND  CLASS  ELSE  FALSE  FOR  FXN  IF  NIL  OR  …
 
 The `Expr` hierarchy models every expression the parser will eventually produce. Each node is a `static` inner class of the base `Expr` type, and all share a single generic `Visitor<R>` interface - meaning any tree pass (printing, evaluation, resolution…) only needs one method per node.
 
-| Node            | Fields                        | Represents                                             |
-| :-------------- | :---------------------------- | :----------------------------------------------------- |
-| `Expr.Binary`   | `left` · `operator` · `right` | Infix ops: `+` `-` `*` `/` `==` `!=` `<` `<=` `>` `>=` |
-| `Expr.Grouping` | `expression`                  | Parenthesised sub-expression `(expr)`                  |
-| `Expr.Literal`  | `value`                       | A number, string, `true`, `false`, or `nil`            |
-| `Expr.Unary`    | `operator` · `right`          | Prefix ops: `-expr` or `!expr`                         |
+| Node | Fields | Represents |
+|:---|:---|:---|
+| `Expr.Binary` | `left` · `operator` · `right` | Infix ops: `+` `-` `*` `/` `==` `!=` `<` `<=` `>` `>=` |
+| `Expr.Grouping` | `expression` | Parenthesised sub-expression `(expr)` |
+| `Expr.Literal` | `value` | A number, string, `true`, `false`, or `nil` |
+| `Expr.Unary` | `operator` · `right` | Prefix ops: `-expr` or `!expr` |
+| `Expr.Variable` | `name` | Read the value of a named variable |
+| `Expr.Assign` | `name` · `value` | Assign a new value to an existing variable |
 
 Each node implements `accept(Visitor<R>)` enabling **double-dispatch** - the canonical solution to the Expression Problem in statically-typed OOP.
 
@@ -222,10 +228,12 @@ Operand must be a number.
 
 `Stmt.java` mirrors `Expr.java` but for _statements_ — side-effecting constructs that don't produce a value. It follows the same auto-generated Visitor pattern.
 
-| Node              | Fields       | Represents                                                         |
-| :---------------- | :----------- | :----------------------------------------------------------------- |
-| `Stmt.Expression` | `expression` | An expression evaluated for its side effects, terminated by `;`    |
-| `Stmt.Out`        | `expression` | The `out` keyword — evaluates the expression and prints the result |
+| Node | Fields | Represents |
+|:---|:---|:---|
+| `Stmt.Expression` | `expression` | An expression evaluated for its side effects, terminated by `;` |
+| `Stmt.Out` | `expression` | The `out` keyword — evaluates the expression and prints the result |
+| `Stmt.Set` | `name` · `initializer` | Variable declaration: `set x = <expr>;` (initializer optional) |
+| `Stmt.Block` | `statements` | A `{ ... }` block that creates a new nested scope |
 
 **Parser changes:**
 
@@ -242,10 +250,58 @@ Operand must be a number.
 **Example Exon program now runnable:**
 
 ```
-out 1 + 2;           // prints: 3
-out "hello" + " world";  // prints: hello world
-out 5 > 3;           // prints: true
-2 * 3;               // expression statement (no output)
+out 1 + 2;                // prints: 3
+out "hello" + " world";   // prints: hello world
+out 5 > 3;                // prints: true
+2 * 3;                    // expression statement (no output)
+set x = 10;               // variable declaration
+out x;                    // prints: 10
+x = x + 1;                // assignment
+{ set y = x * 2; out y; } // block scope — y is local
+```
+
+---
+
+### 🗄️ 9 — Variables, Assignment & Environments
+
+#### `Environment.java`
+
+The `Environment` class provides a **linked-chain of scopes** — each block gets its own environment that holds a reference to the enclosing one. Variable lookup and assignment walk the chain outward.
+
+| Method | Behaviour |
+|:---|:---|
+| `define(name, value)` | Binds a new name in the **current** scope (always succeeds, allows shadowing) |
+| `get(token)` | Searches the current scope, then enclosing scopes; throws `RuntimeError` if not found |
+| `assign(token, value)` | Updates an **existing** binding anywhere in the scope chain; throws `RuntimeError` if undeclared |
+
+#### New expression nodes in `Expr.java`
+
+| Node | Parsed as | Evaluated as |
+|:---|:---|:---|
+| `Expr.Variable` | a bare identifier `x` | looks up `x` in the current environment |
+| `Expr.Assign` | `x = <expr>` | evaluates the right-hand side, assigns it to `x` |
+
+Assignment is **right-associative** and parses at the same level as `equality`, using a lookahead: if the left-hand side turns out to be an `Expr.Variable`, it's rewritten into an `Expr.Assign`; otherwise a parse error is reported.
+
+#### New statement nodes in `Stmt.java`
+
+| Node | Syntax | Behaviour |
+|:---|:---|:---|
+| `Stmt.Set` | `set <name> = <expr>;` | Declares a variable in the current scope; initializer is optional (defaults to `nil`) |
+| `Stmt.Block` | `{ <stmts> }` | Creates a child `Environment`, executes all inner statements, then restores the previous scope |
+
+#### `executeBlock` in `Interpreter.java`
+
+```java
+void executeBlock(List<Stmt> statements, Environment environment) {
+    Environment previous = this.environment;
+    try {
+        this.environment = environment;  // enter new scope
+        for (Stmt s : statements) execute(s);
+    } finally {
+        this.environment = previous;     // restore on exit (even on error)
+    }
+}
 ```
 
 ---
@@ -353,17 +409,24 @@ Phase 5 — Statements  ✅ Done
 - [x] Interpreter updated to execute statement lists
 
 ```
-Phase 6 — Variables & Control Flow
+Phase 6 — Variables & Scope  ✅ Done
 ```
+- [x] `Expr.Variable` and `Expr.Assign` nodes
+- [x] `set` variable declarations (`Stmt.Set`)
+- [x] Block scoping (`Stmt.Block`)
+- [x] `Environment` with lexical scope chain
+- [x] `assignment()` in parser with l-value validation
 
-- [ ] `set` variable declarations
-- [ ] Environment for variable storage & lookup
-- [ ] Block scoping `{ ... }`
+```
+Phase 7 — Control Flow
+```
 - [ ] `if` / `else` branching
-- [ ] `for` and `loop` loop constructs
+- [ ] `for` loop construct
+- [ ] `loop` (while-style) construct
+- [ ] Logical `and` / `or` with short-circuit evaluation
 
 ```
-Phase 7 — Functions & Classes
+Phase 8 — Functions & Classes
 ```
 
 - [ ] `fxn` declarations, first-class functions, `return`
