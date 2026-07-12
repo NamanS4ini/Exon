@@ -6,15 +6,15 @@
 
 [![Language](https://img.shields.io/badge/Language-Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://www.java.com/)
 [![Status](https://img.shields.io/badge/Status-Active%20Development-22c55e?style=for-the-badge)]()
-[![Stage](https://img.shields.io/badge/Stage-Variables%20%26%20Scope%20Complete-6366f1?style=for-the-badge)]()
+[![Stage](https://img.shields.io/badge/Stage-Control%20Flow%20Complete-6366f1?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-MIT-0ea5e9?style=for-the-badge)]()
 
 <br/>
 
 _Exon is a hand-built, tree-walk interpreter that compiles source text through_
 _scanning → parsing → AST construction → evaluation. Scanner, AST, parser,_
-_evaluator, statements, variables, assignment, and block scoping are all complete._
-_Control flow (`if`/`else`, loops) is next._
+_evaluator, statements, variables, scoping, and full control flow are complete._
+_Functions & classes are next._
 
 </div>
 
@@ -40,8 +40,12 @@ _Control flow (`if`/`else`, loops) is next._
 |   6   | Variable assignment expressions            | ✅ **Complete**    |
 |   6   | `Environment` (variable storage & lookup)  | ✅ **Complete**    |
 |   6   | Block scoping `{ ... }`                    | ✅ **Complete**    |
-|   7   | `if` / `else`, `for`, `loop` control flow  |   🔷 **Planned**   |
-|   8   | Functions, classes, closures               |   🔷 **Planned**   |
+|   7   | `if` / `else` branching (`Stmt.If`) | ✅ **Complete** |
+|   7   | `loop` while-style construct (`Stmt.Loop`) | ✅ **Complete** |
+|   7   | `for` loop (desugared to `Loop`) | ✅ **Complete** |
+|   7   | Logical `and` / `or` with short-circuit (`Expr.Logical`) | ✅ **Complete** |
+|   8   | Functions (`fxn`), closures, `return` | 🚧 **In Progress** |
+|   9   | Classes, `this`, `super`, inheritance | 🔷 **Planned** |
 
 ---
 
@@ -131,6 +135,7 @@ The `Expr` hierarchy models every expression the parser will eventually produce.
 | `Expr.Unary` | `operator` · `right` | Prefix ops: `-expr` or `!expr` |
 | `Expr.Variable` | `name` | Read the value of a named variable |
 | `Expr.Assign` | `name` · `value` | Assign a new value to an existing variable |
+| `Expr.Logical` | `left` · `operator` · `right` | Short-circuit `and` / `or` — returns a value, not just a boolean |
 
 Each node implements `accept(Visitor<R>)` enabling **double-dispatch** - the canonical solution to the Expression Problem in statically-typed OOP.
 
@@ -234,6 +239,8 @@ Operand must be a number.
 | `Stmt.Out` | `expression` | The `out` keyword — evaluates the expression and prints the result |
 | `Stmt.Set` | `name` · `initializer` | Variable declaration: `set x = <expr>;` (initializer optional) |
 | `Stmt.Block` | `statements` | A `{ ... }` block that creates a new nested scope |
+| `Stmt.If` | `condition` · `thenBranch` · `elseBranch` | `if`/`else` branching (else is optional) |
+| `Stmt.Loop` | `condition` · `body` | While-style loop; also the target of `for` desugaring |
 
 **Parser changes:**
 
@@ -258,7 +265,58 @@ set x = 10;               // variable declaration
 out x;                    // prints: 10
 x = x + 1;                // assignment
 { set y = x * 2; out y; } // block scope — y is local
+if (x > 5) out "big"; else out "small";   // if/else
+loop (x > 0) { out x; x = x - 1; }       // loop
+for (set i = 0; i < 3; i = i + 1) out i; // for loop
 ```
+
+---
+
+### 🔀 10 — Control Flow
+
+Exon now supports full imperative control flow.
+
+#### `if` / `else` — `Stmt.If`
+
+```
+if (<condition>) <thenStmt>
+if (<condition>) <thenStmt> else <elseStmt>
+```
+
+The else branch is optional. The condition is evaluated using the same truthiness rules as the interpreter (`nil` and `false` are falsy; everything else is truthy).
+
+#### `loop` (while-style) — `Stmt.Loop`
+
+```
+loop (<condition>) <body>
+```
+
+Executes `body` repeatedly as long as `condition` is truthy. Maps directly to `visitLoopStmt` in the interpreter.
+
+#### `for` loop — desugared to `Stmt.Loop`
+
+```
+for (<initializer>; <condition>; <increment>) <body>
+```
+
+The `for` statement is **syntactic sugar** — the parser rewrites it entirely into existing nodes:
+1. Wraps `body` + `increment` expression into a `Stmt.Block`
+2. Wraps that in a `Stmt.Loop` with the condition (defaulting to `true` if omitted)
+3. Wraps the whole thing in another `Stmt.Block` containing the initializer
+
+This means no new interpreter support was needed — only parser work.
+
+#### Logical `and` / `or` — `Expr.Logical`
+
+Unlike `Expr.Binary`, `Expr.Logical` uses **short-circuit evaluation**:
+
+| Operator | Short-circuits when... | Returns |
+|:---|:---|:---|
+| `or` | left side is **truthy** | the left value (without evaluating right) |
+| `and` | left side is **falsy** | the left value (without evaluating right) |
+| either | no short-circuit | the right value |
+
+Note: logical operators return **the operand value itself** (like JavaScript), not just `true`/`false`. This means `nil or "default"` evaluates to `"default"`.
 
 ---
 
@@ -418,17 +476,16 @@ Phase 6 — Variables & Scope  ✅ Done
 - [x] `assignment()` in parser with l-value validation
 
 ```
-Phase 7 — Control Flow
+Phase 7 — Control Flow  ✅ Done
 ```
-- [ ] `if` / `else` branching
-- [ ] `for` loop construct
-- [ ] `loop` (while-style) construct
-- [ ] Logical `and` / `or` with short-circuit evaluation
+- [x] `if` / `else` branching (`Stmt.If`, `visitIfStmt`)
+- [x] `loop` while-style construct (`Stmt.Loop`, `visitLoopStmt`)
+- [x] `for` loop desugared to `Stmt.Loop` at parse time
+- [x] Logical `and` / `or` with short-circuit (`Expr.Logical`)
 
 ```
 Phase 8 — Functions & Classes
 ```
-
 - [ ] `fxn` declarations, first-class functions, `return`
 - [ ] Closures and lexical scoping
 - [ ] `class` definitions, `this`, `super`, single inheritance
