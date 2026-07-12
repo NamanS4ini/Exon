@@ -6,8 +6,11 @@ import com.interpreter.exon.Expr.Assign;
 import com.interpreter.exon.Expr.Binary;
 import com.interpreter.exon.Expr.Grouping;
 import com.interpreter.exon.Expr.Literal;
+import com.interpreter.exon.Expr.Logical;
 import com.interpreter.exon.Expr.Unary;
 import com.interpreter.exon.Stmt.Block;
+import com.interpreter.exon.Stmt.If;
+import com.interpreter.exon.Stmt.Loop;
 import com.interpreter.exon.Stmt.Set;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
@@ -31,6 +34,16 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
     }
 
     @Override
+    public Void visitIfStmt(If stmt) {
+        if (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.thenBranch);
+        } else if (stmt.elseBranch != null) {
+            execute(stmt.elseBranch);
+        }
+        return null;
+    }
+
+    @Override
     public Object visitGroupingExpr(Grouping expr) {
         return evaluate(expr.expression);
     }
@@ -41,6 +54,27 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     private void execute(Stmt stmt) {
         stmt.accept(this);
+    }
+
+    @Override
+    public Object visitLogicalExpr(Logical expr) {
+        Object left = evaluate(expr.left);
+        if (expr.operator.type == TokenType.OR) {
+            if (isTruthy(left))
+                return left;
+        } else {
+            if (!isTruthy(left))
+                return left;
+        }
+        return evaluate(expr.right);
+    }
+
+    @Override
+    public Void visitLoopStmt(Loop stmt) {
+        while (isTruthy(evaluate(stmt.condition))) {
+            execute(stmt.body);
+        }
+        return null;
     }
 
     @Override

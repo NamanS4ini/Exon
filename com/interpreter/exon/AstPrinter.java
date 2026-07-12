@@ -1,6 +1,7 @@
 package com.interpreter.exon;
 
 import com.interpreter.exon.Expr.Assign;
+import com.interpreter.exon.Expr.Logical;
 import com.interpreter.exon.Expr.Variable;
 
 class AstPrinter implements Expr.Visitor<String> {
@@ -24,6 +25,12 @@ class AstPrinter implements Expr.Visitor<String> {
 
     @Override
     public String visitVariableExpr(Variable expr) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String visitLogicalExpr(Logical expr) {
         // TODO Auto-generated method stub
         return null;
     }

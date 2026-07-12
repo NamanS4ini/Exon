@@ -5,7 +5,9 @@ import java.util.List;
 abstract class Stmt {
     interface Visitor<R> {
     R visitExpressionStmt(Expression stmt);
+    R visitIfStmt(If stmt);
     R visitOutStmt(Out stmt);
+    R visitLoopStmt(Loop stmt);
     R visitSetStmt(Set stmt);
     R visitBlockStmt(Block stmt);
     }
@@ -21,6 +23,22 @@ abstract class Stmt {
 
     final Expr expression;
     }
+ static class If extends Stmt{
+    If(Expr condition, Stmt thenBranch, Stmt elseBranch) {
+    this.condition = condition;
+    this.thenBranch = thenBranch;
+    this.elseBranch = elseBranch;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+    return visitor.visitIfStmt(this);
+    }
+
+    final Expr condition;
+    final Stmt thenBranch;
+    final Stmt elseBranch;
+    }
  static class Out extends Stmt{
     Out(Expr expression) {
     this.expression = expression;
@@ -32,6 +50,20 @@ abstract class Stmt {
     }
 
     final Expr expression;
+    }
+ static class Loop extends Stmt{
+    Loop(Expr condition, Stmt body) {
+    this.condition = condition;
+    this.body = body;
+    }
+
+    @Override
+    <R> R accept(Visitor<R> visitor) {
+    return visitor.visitLoopStmt(this);
+    }
+
+    final Expr condition;
+    final Stmt body;
     }
  static class Set extends Stmt{
     Set(Token name, Expr initializer) {
