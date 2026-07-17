@@ -218,7 +218,30 @@ class Parser {
             Expr right = unary();
             expr = new Expr.Binary(expr, operator, right);
         }
+        return call();
+    }
+
+    private Expr call() {
+        Expr expr = primary();
+        while (true) {
+            if (match(LEFT_PAREN)) {
+                expr = finishCall(expr);
+            } else {
+                break;
+            }
+        }
         return expr;
+    }
+
+    private Expr finishCall(Expr callee) {
+        List<Expr> arguments = new ArrayList<>();
+        if (!check(RIGHT_PAREN)) {
+            do {
+                arguments.add(expression());
+            } while (match(COMMA));
+        }
+        Token paren = consume(RIGHT_PAREN, "Expect ')' after arguments.");
+        return Expr.Call(callee, paren, arguments);
     }
 
     private Expr unary() {
