@@ -1,9 +1,12 @@
 package com.interpreter.exon;
 
 import java.util.List;
+import java.util.ArrayList;
+
 
 import com.interpreter.exon.Expr.Assign;
 import com.interpreter.exon.Expr.Binary;
+import com.interpreter.exon.Expr.Call;
 import com.interpreter.exon.Expr.Grouping;
 import com.interpreter.exon.Expr.Literal;
 import com.interpreter.exon.Expr.Logical;
@@ -192,6 +195,29 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
         return null;
     }
+
+
+    @Override
+    public Object visitCallExpr(Call expr) {
+        Object callee = evaluate(expr.callee);
+
+        List<Object> arguments = new ArrayList<>();
+        for (Expr argument : expr.arguments) {
+            arguments.add(evaluate(argument));
+        }
+
+        if (!(callee instanceof ExonCallable)) {
+            throw new RuntimeError(expr.paren, "Can only call functions andd classes.");
+        }
+
+        ExonCallable function = (ExonCallable) callee;
+        if (arguments.size() != function.arity()) {
+            throw new RuntimeError(expr.paren,
+                    "Expected " + function.arity() + " arguments but got  " + arguments.size() + ".");
+        }
+        return function.call(this, arguments);
+    }
+
 
     private boolean isEqual(Object a, Object b) {
         if (a == null && b == null)
