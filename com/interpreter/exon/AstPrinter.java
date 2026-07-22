@@ -1,6 +1,7 @@
 package com.interpreter.exon;
 
 import com.interpreter.exon.Expr.Assign;
+import com.interpreter.exon.Expr.Call;
 import com.interpreter.exon.Expr.Logical;
 import com.interpreter.exon.Expr.Variable;
 
@@ -19,6 +20,12 @@ class AstPrinter implements Expr.Visitor<String> {
 
     @Override
     public String visitAssignExpr(Assign expr) {
+        // TODO Auto-generated method stub
+        return null;
+    }
+
+    @Override
+    public String visitCallExpr(Call expr) {
         // TODO Auto-generated method stub
         return null;
     }
