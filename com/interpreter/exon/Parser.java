@@ -80,12 +80,12 @@ class Parser {
         consume(LEFT_PAREN, "expect '(' after " + kind + "name.");
         List<Token> parameters = new ArrayList<>();
         if (!check(RIGHT_PAREN)) {
-            do{
-                if(parameters.size() >= 255){
+            do {
+                if (parameters.size() >= 255) {
                     error(peek(), "Can't have more than 255 parameters.");
                 }
                 parameters.add(
-                    consume(IDENTIFIER, "Expect parameter name."));
+                        consume(IDENTIFIER, "Expect parameter name."));
             } while (match(COMMA));
         }
         consume(RIGHT_PAREN, "Expect ')' after parameters.");
@@ -240,7 +240,7 @@ class Parser {
             Expr right = unary();
             expr = new Expr.Binary(expr, operator, right);
         }
-        return call();
+        return expr;
     }
 
     private Expr call() {
@@ -266,7 +266,7 @@ class Parser {
             } while (match(COMMA));
         }
         Token paren = consume(RIGHT_PAREN, "Expect ')' after arguments.");
-        return Expr.Call(callee, paren, arguments);
+        return new Expr.Call(callee, paren, arguments);
     }
 
     private Expr unary() {
@@ -275,7 +275,7 @@ class Parser {
             Expr right = unary();
             return new Expr.Unary(operator, right);
         }
-        return primary();
+        return call();
     }
 
     private Expr primary() {

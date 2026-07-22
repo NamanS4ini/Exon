@@ -15,8 +15,9 @@ endif
 # Recursively collect Java sources without relying on shell-specific find.
 rwildcard = $(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 SOURCES := $(call rwildcard,com/,*.java)
+TEST_FILE := test.exon
 
-.PHONY: all compile run clean rebuild generateast
+.PHONY: all compile run clean rebuild generateast test
 
 all: run
 
@@ -29,6 +30,9 @@ run: compile
 
 generateast: compile
 	$(JAVA) -cp $(BUILD_DIR) com.interpreter.tool.generateAst com/interpreter/exon
+
+test: compile
+	$(JAVA) -cp $(BUILD_DIR) $(MAIN_CLASS) $(TEST_FILE)
 
 clean:
 	@$(RMDIR_BUILD)

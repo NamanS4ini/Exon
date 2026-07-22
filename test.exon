@@ -1,0 +1,35 @@
+set greeting = "Hello";
+set name = "naman";
+set count = 0;
+
+out greeting + " " + name;
+out 10 + 5;
+out 10 - 5;
+out 10 * 5;
+out 10 / 5;
+out 10 > 5;
+out 10 == 5;
+out 10 != 5;
+
+if (true and name != nil) {
+    out "if branch";
+} else {
+    out "else branch";
+}
+
+{
+    set local = 42;
+    out local;
+}
+
+for (count = 0; count < 3; count = count + 1) {
+    out count;
+}
+
+loop (count < 5) {
+    out count;
+    count = count + 1;
+}
+
+out true or false;
+out false and true;

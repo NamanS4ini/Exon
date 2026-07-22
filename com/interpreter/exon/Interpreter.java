@@ -3,7 +3,6 @@ package com.interpreter.exon;
 import java.util.List;
 import java.util.ArrayList;
 
-
 import com.interpreter.exon.Expr.Assign;
 import com.interpreter.exon.Expr.Binary;
 import com.interpreter.exon.Expr.Call;
@@ -12,6 +11,7 @@ import com.interpreter.exon.Expr.Literal;
 import com.interpreter.exon.Expr.Logical;
 import com.interpreter.exon.Expr.Unary;
 import com.interpreter.exon.Stmt.Block;
+import com.interpreter.exon.Stmt.Function;
 import com.interpreter.exon.Stmt.If;
 import com.interpreter.exon.Stmt.Loop;
 import com.interpreter.exon.Stmt.Set;
@@ -27,10 +27,12 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
             public int arity() {
                 return 0;
             }
+
             @Override
             public Object call(Interpreter interpreter, List<Object> arguments) {
                 return (double) System.currentTimeMillis() / 1000.0;
             }
+
             @Override
             public String toString() {
                 return "<native fn>";
@@ -120,6 +122,14 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         evaluate(stmt.expression);
         return null;
     }
+
+    @Override
+    public Void visitFunctionStmt(Function stmt) {
+        ExonFunction function = new ExonFunction(stmt);
+        environment.define(stmt.name.lexeme, function);
+        return null;
+    }
+
     @Override
     public Void visitOutStmt(Stmt.Out stmt) {
         Object value = evaluate(stmt.expression);
@@ -201,7 +211,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
                     return (double) left + (double) right;
                 if (left instanceof String && right instanceof String)
                     return (String) left + (String) right;
-                throw new RuntimeError(expr.operator, "Operands must be two numbers or two strings."); 
+                throw new RuntimeError(expr.operator, "Operands must be two numbers or two strings.");
 
             case SLASH:
                 checkNumberOperands(expr.operator, left, right);
@@ -212,7 +222,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
         return null;
     }
-
 
     @Override
     public Object visitCallExpr(Call expr) {
@@ -234,7 +243,6 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         }
         return function.call(this, arguments);
     }
-
 
     private boolean isEqual(Object a, Object b) {
         if (a == null && b == null)
