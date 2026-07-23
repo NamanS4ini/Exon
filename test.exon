@@ -1,35 +1,117 @@
+// ─────────────────────────────────────────────────────────────────────────────
+//  test.exon  ·  Exon integration test suite
+//  Run with:  make test   |   java -cp out com.interpreter.exon.Exon test.exon
+// ─────────────────────────────────────────────────────────────────────────────
+
+
+// ─── 1. Variables & basic output ─────────────────────────────────────────────
+// Declaring variables with 'set' and printing them with 'out'
 set greeting = "Hello";
 set name = "naman";
 set count = 0;
 
-out greeting + " " + name;
-out 10 + 5;
-out 10 - 5;
-out 10 * 5;
-out 10 / 5;
-out 10 > 5;
-out 10 == 5;
-out 10 != 5;
+out greeting + " " + name;   // Hello naman
 
+
+// ─── 2. Arithmetic operators ──────────────────────────────────────────────────
+out 10 + 5;   // 15
+out 10 - 5;   // 5
+out 10 * 5;   // 50
+out 10 / 5;   // 2
+
+
+// ─── 3. Comparison operators ──────────────────────────────────────────────────
+out 10 > 5;    // true
+out 10 == 5;   // false
+out 10 != 5;   // true
+
+
+// ─── 4. Logical operators (short-circuit) ─────────────────────────────────────
+// 'and' returns the first falsy value or the last value if all truthy
+// 'or'  returns the first truthy value or the last value if all falsy
+out true or false;    // true
+out false and true;   // false
+out true and name != nil;   // true  (both sides truthy)
+
+
+// ─── 5. if / else branching ───────────────────────────────────────────────────
+// Condition uses truthiness: nil and false are falsy, everything else is truthy
 if (true and name != nil) {
-    out "if branch";
+    out "if branch";    // ← this runs
 } else {
     out "else branch";
 }
 
+
+// ─── 6. Block scoping ─────────────────────────────────────────────────────────
+// Variables declared inside a block are local to that block
 {
     set local = 42;
-    out local;
+    out local;   // 42
 }
+// 'local' is no longer in scope here
 
+
+// ─── 7. for loop ──────────────────────────────────────────────────────────────
+// for is syntactic sugar: desugared into a Stmt.Loop by the parser
+// prints 0, 1, 2
 for (count = 0; count < 3; count = count + 1) {
     out count;
 }
 
+
+// ─── 8. loop (while-style) ────────────────────────────────────────────────────
+// 'loop' runs while the condition is truthy
+// prints 3, 4  (count is still 3 after the for loop above)
 loop (count < 5) {
     out count;
     count = count + 1;
 }
 
-out true or false;
-out false and true;
+
+// ─── 9. Functions ─────────────────────────────────────────────────────────────
+// Declaring a named function with 'fxn'
+fxn greet(person) {
+    return "Hello, " + person + "!";
+}
+out greet("Exon");   // Hello, Exon!
+
+
+// ─── 10. Functions with multiple parameters ────────────────────────────────────
+fxn add(a, b) {
+    return a + b;
+}
+out add(3, 4);   // 7
+
+
+// ─── 11. Recursive functions ───────────────────────────────────────────────────
+// Recursion works because the function name is bound before the body executes
+fxn factorial(n) {
+    if (n <= 1) return 1;
+    return n * factorial(n - 1);
+}
+out factorial(5);   // 120
+
+
+// ─── 12. First-class functions & closures ──────────────────────────────────────
+// Functions are values — they can be stored and passed around.
+// A closure captures the environment where it was *defined*.
+fxn makeCounter() {
+    set tally = 0;
+    fxn tick() {
+        tally = tally + 1;
+        return tally;
+    }
+    return tick;
+}
+set counter = makeCounter();
+out counter();   // 1
+out counter();   // 2
+out counter();   // 3
+
+
+// ─── 13. Native built-in: clock() ──────────────────────────────────────────────
+// clock() is pre-defined in the global environment.
+// Returns current Unix time in seconds as a double.
+set t = clock();
+out t > 0;   // true  (sanity check: time is positive)

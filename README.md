@@ -6,15 +6,15 @@
 
 [![Language](https://img.shields.io/badge/Language-Java-ED8B00?style=for-the-badge&logo=openjdk&logoColor=white)](https://www.java.com/)
 [![Status](https://img.shields.io/badge/Status-Active%20Development-22c55e?style=for-the-badge)]()
-[![Stage](https://img.shields.io/badge/Stage-Control%20Flow%20Complete-6366f1?style=for-the-badge)]()
+[![Stage](https://img.shields.io/badge/Stage-Functions%20Complete-6366f1?style=for-the-badge)]()
 [![License](https://img.shields.io/badge/License-MIT-0ea5e9?style=for-the-badge)]()
 
 <br/>
 
 _Exon is a hand-built, tree-walk interpreter that compiles source text through_
 _scanning → parsing → AST construction → evaluation. Scanner, AST, parser,_
-_evaluator, statements, variables, scoping, and full control flow are complete._
-_Functions & classes are next._
+_evaluator, statements, variables, control flow, and first-class functions with_
+_closures are all complete. Classes & inheritance are next._
 
 </div>
 
@@ -44,8 +44,13 @@ _Functions & classes are next._
 |   7   | `loop` while-style construct (`Stmt.Loop`) | ✅ **Complete** |
 |   7   | `for` loop (desugared to `Loop`) | ✅ **Complete** |
 |   7   | Logical `and` / `or` with short-circuit (`Expr.Logical`) | ✅ **Complete** |
-|   8   | Functions (`fxn`), closures, `return` | 🚧 **In Progress** |
-|   9   | Classes, `this`, `super`, inheritance | 🔷 **Planned** |
+|   8   | `fxn` function declarations (`Stmt.Function`) | ✅ **Complete** |
+|   8   | `return` statement with value (`Stmt.Return`) | ✅ **Complete** |
+|   8   | First-class functions & closures (`ExonFunction`) | ✅ **Complete** |
+|   8   | `ExonCallable` interface & arity checking | ✅ **Complete** |
+|   8   | Native `clock()` built-in function | ✅ **Complete** |
+|   8   | `Makefile` build system | ✅ **Complete** |
+|   9   | Classes, `this`, `super`, inheritance | 🚧 **In Progress** |
 
 ---
 
@@ -66,10 +71,20 @@ Exon/
         │   ├── Interpreter.java     ← Tree-walk evaluator
         │   ├── Stmt.java            ← Statement AST node hierarchy
         │   ├── Environment.java     ← Variable storage with lexical scoping
+        │   ├── ExonCallable.java    ← Interface for all callable values
+        │   ├── ExonFunction.java    ← Runtime function with closure capture
+        │   ├── Return.java          ← Exception used to unwind the stack on return
         │   └── RuntimeError.java    ← Runtime exception with token context
         └── tool/
             └── generateAst.java     ← Code-gen tool that writes Expr.java
 ```
+
+Additional files in the project root:
+
+```
+Exon/
+├── Makefile      ← Cross-platform build/run/test automation
+└── test.exon     ← Integration test script covering all language features
 
 ---
 
@@ -136,6 +151,7 @@ The `Expr` hierarchy models every expression the parser will eventually produce.
 | `Expr.Variable` | `name` | Read the value of a named variable |
 | `Expr.Assign` | `name` · `value` | Assign a new value to an existing variable |
 | `Expr.Logical` | `left` · `operator` · `right` | Short-circuit `and` / `or` — returns a value, not just a boolean |
+| `Expr.Call` | `callee` · `paren` · `arguments` | Function call expression: `callee(args...)` |
 
 Each node implements `accept(Visitor<R>)` enabling **double-dispatch** - the canonical solution to the Expression Problem in statically-typed OOP.
 
@@ -241,6 +257,8 @@ Operand must be a number.
 | `Stmt.Block` | `statements` | A `{ ... }` block that creates a new nested scope |
 | `Stmt.If` | `condition` · `thenBranch` · `elseBranch` | `if`/`else` branching (else is optional) |
 | `Stmt.Loop` | `condition` · `body` | While-style loop; also the target of `for` desugaring |
+| `Stmt.Function` | `name` · `params` · `body` | `fxn` declaration — binds name to an `ExonFunction` in the environment |
+| `Stmt.Return` | `keyword` · `value` | Throws a `Return` exception to unwind the call stack |
 
 **Parser changes:**
 
@@ -364,6 +382,75 @@ void executeBlock(List<Stmt> statements, Environment environment) {
 
 ---
 
+### ⚡ 11 — Functions & Closures
+
+Exon now supports **first-class functions** declared with `fxn`. Functions are values — they can be stored in variables, passed as arguments, and returned from other functions.
+
+#### Syntax
+
+```
+fxn <name>(<params>) {
+    <body>
+    return <value>;
+}
+```
+
+A `return` with no value returns `nil`. A function without a `return` also returns `nil`.
+
+#### Working example
+
+```
+fxn greet(name) {
+    return "Hello, " + name + "!";
+}
+out greet("Exon");   // Hello, Exon!
+
+fxn add(a, b) { return a + b; }
+set result = add(3, 4);
+out result;          // 7
+```
+
+#### Closures
+
+Every function captures the **environment at the point of its definition**, not the calling environment. This enables closures:
+
+```
+fxn counter() {
+    set count = 0;
+    fxn increment() {
+        count = count + 1;
+        return count;
+    }
+    return increment;
+}
+set c = counter();
+out c();   // 1
+out c();   // 2
+```
+
+#### Implementation details
+
+| Component | Role |
+|:---|:---|
+| `ExonCallable` | Interface with `arity()` and `call(interpreter, arguments)` |
+| `ExonFunction` | Implements `ExonCallable` — wraps a `Stmt.Function` + closing `Environment` |
+| `Return` | A `RuntimeException` subclass that carries the return value and unwinds the call stack |
+| `Stmt.Function` | AST node: `name`, `params` (list of tokens), `body` (list of stmts) |
+| `Stmt.Return` | AST node: `keyword` token + optional value expr |
+| `Expr.Call` | AST node: `callee`, closing `paren` (for error reporting), `arguments` list |
+
+Arity is checked at the call site — a mismatch throws a `RuntimeError` with the exact count.
+
+#### Native built-in: `clock()`
+
+The interpreter pre-defines one native function in the global environment:
+
+```
+out clock();   // prints current Unix time in seconds (as a double)
+```
+
+---
+
 ### ⚙️ 5 — AST Code-Generation Tool (`generateAst.java`)
 
 Rather than hand-editing `Expr.java` every time a new node is needed, the project ships a **meta-programming tool** at `com/interpreter/tool/generateAst.java`.
@@ -387,26 +474,38 @@ Literal  : Object value
 Unary    : Token operator, Expr right
 ```
 
+
 ---
 
 ## 🚀 Running Exon
 
-### Step 1 - Compile
+### With Make *(recommended)*
 
 ```bash
-javac com/interpreter/exon/*.java
+make          # compile + launch REPL
+make run ARGS=path/to/script.exon   # compile + run a file
+make test     # compile + run test.exon
+make rebuild  # clean, then recompile
 ```
 
-### Step 2 - Run a script file
+### Without Make
+
+#### Step 1 — Compile
 
 ```bash
-java com.interpreter.exon.Exon path\to\script.exon
+javac -d out com/interpreter/exon/*.java com/interpreter/tool/*.java
 ```
 
-### Step 3 - Or launch the interactive REPL
+#### Step 2 — Run a script file
 
 ```bash
-java com.interpreter.exon.Exon
+java -cp out com.interpreter.exon.Exon path\to\script.exon
+```
+
+#### Step 3 — Or launch the interactive REPL
+
+```bash
+java -cp out com.interpreter.exon.Exon
 ```
 
 ```
@@ -484,16 +583,27 @@ Phase 7 — Control Flow  ✅ Done
 - [x] Logical `and` / `or` with short-circuit (`Expr.Logical`)
 
 ```
-Phase 8 — Functions & Classes
+Phase 8 — Functions  ✅ Done
 ```
-- [ ] `fxn` declarations, first-class functions, `return`
-- [ ] Closures and lexical scoping
-- [ ] `class` definitions, `this`, `super`, single inheritance
+- [x] `fxn` declarations (`Stmt.Function`, `visitFunctionStmt`)
+- [x] `return` statement (`Stmt.Return`, `Return` exception unwind)
+- [x] First-class functions — functions are values, can be stored in variables
+- [x] Closures — `ExonFunction` captures the defining `Environment`
+- [x] `ExonCallable` interface + arity checking at call sites
+- [x] Native `clock()` built-in (returns Unix time in seconds)
+- [x] `Makefile` with `compile`, `run`, `test`, `clean`, `rebuild` targets
 
 ```
-Phase 6 — Standard Library
+Phase 9 — Classes
 ```
+- [ ] `class` declarations (`Stmt.Class`)
+- [ ] Instance creation, `get`/`set` fields
+- [ ] `this` binding
+- [ ] `super` and single inheritance
 
+```
+Phase 10 — Standard Library
+```
 - [ ] Built-in utilities for I/O, strings, and math
 
 ---
