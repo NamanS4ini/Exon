@@ -15,7 +15,6 @@ import com.interpreter.exon.Stmt.Function;
 import com.interpreter.exon.Stmt.If;
 import com.interpreter.exon.Stmt.Loop;
 import com.interpreter.exon.Stmt.Return;
-import com.interpreter.exon.Stmt.Set;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
@@ -126,7 +125,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
 
     @Override
     public Void visitFunctionStmt(Function stmt) {
-        ExonFunction function = new ExonFunction(stmt);
+        ExonFunction function = new ExonFunction(stmt, environment);
         environment.define(stmt.name.lexeme, function);
         return null;
     }
@@ -143,7 +142,7 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         Object value = null;
         if (stmt.value != null)
             value = evaluate(stmt.value);
-        throw new Return(value);
+        throw new com.interpreter.exon.Return(value);
     }
 
     @Override
