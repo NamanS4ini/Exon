@@ -14,6 +14,7 @@ import com.interpreter.exon.Stmt.Block;
 import com.interpreter.exon.Stmt.Function;
 import com.interpreter.exon.Stmt.If;
 import com.interpreter.exon.Stmt.Loop;
+import com.interpreter.exon.Stmt.Return;
 import com.interpreter.exon.Stmt.Set;
 
 public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
@@ -135,6 +136,14 @@ public class Interpreter implements Expr.Visitor<Object>, Stmt.Visitor<Void> {
         Object value = evaluate(stmt.expression);
         System.out.println(stringify(value));
         return null;
+    }
+
+    @Override
+    public Void visitReturnStmt(Return stmt) {
+        Object value = null;
+        if (stmt.value != null)
+            value = evaluate(stmt.value);
+        throw new Return(value);
     }
 
     @Override

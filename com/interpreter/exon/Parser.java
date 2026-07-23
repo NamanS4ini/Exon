@@ -108,6 +108,8 @@ class Parser {
     private Stmt statement() {
         if (match(OUT))
             return printStatement();
+        if (match(RETURN))
+            return returnStatement();
         if (match(LOOP))
             return whileStatement();
         if (match(LEFT_BRACE))
@@ -117,6 +119,16 @@ class Parser {
         if (match(IF))
             return ifStatement();
         return expressionStatement();
+    }
+
+    private Stmt returnStatement() {
+        Token keyword = previous();
+        Expr value = null;
+        if (!check(SEMICOLON)) {
+            value = expression();
+        }
+        consume(SEMICOLON, "Expect ';' after return value.");
+        return new Stmt.Return(keyword, value);
     }
 
     private Stmt forStatement() {
