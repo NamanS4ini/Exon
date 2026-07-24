@@ -110,7 +110,7 @@ class Parser {
             return printStatement();
         if (match(RETURN))
             return returnStatement();
-        if (match(LOOP))
+        if (match(WHEN))
             return whileStatement();
         if (match(LEFT_BRACE))
             return new Stmt.Block(block());
@@ -174,7 +174,7 @@ class Parser {
     }
 
     private Stmt whileStatement() {
-        consume(LEFT_PAREN, "Expect '(' after 'loop'.");
+        consume(LEFT_PAREN, "Expect '(' after 'when'.");
         Expr condition = expression();
         consume(RIGHT_PAREN, "Expect ')' after condition.");
         Stmt body = statement();
@@ -374,7 +374,7 @@ class Parser {
                 case OUT:
                 case RETURN:
                 case SET:
-                case LOOP:
+                case WHEN:
                     return;
             }
             advance();

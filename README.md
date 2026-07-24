@@ -41,7 +41,7 @@ _closures are all complete. Classes & inheritance are next._
 |   6   | `Environment` (variable storage & lookup)  | ✅ **Complete**    |
 |   6   | Block scoping `{ ... }`                    | ✅ **Complete**    |
 |   7   | `if` / `else` branching (`Stmt.If`) | ✅ **Complete** |
-|   7   | `loop` while-style construct (`Stmt.Loop`) | ✅ **Complete** |
+|   7   | `when` while-style construct (`Stmt.Loop`) | ✅ **Complete** |
 |   7   | `for` loop (desugared to `Loop`) | ✅ **Complete** |
 |   7   | Logical `and` / `or` with short-circuit (`Expr.Logical`) | ✅ **Complete** |
 |   8   | `fxn` function declarations (`Stmt.Function`) | ✅ **Complete** |
@@ -105,7 +105,7 @@ Exon/
 | Number literals             | `42` · `3.14` - integers and decimals                                                                      |
 | Identifiers                 | `myVar` · `_count`                                                                                         |
 | Line comments               | `// anything to end of line`                                                                               |
-| Keywords                    | `and` `class` `else` `false` `for` `fxn` `if` `nil` `or` `out` `set` `return` `super` `this` `true` `loop` |
+| Keywords                    | `and` `class` `else` `false` `for` `fxn` `if` `nil` `or` `out` `set` `return` `super` `this` `true` `when` |
 
 </details>
 
@@ -197,7 +197,7 @@ primary     →  NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")"
 | :------------------ | :----------------------------------------------------------------------------------------------------------------------- |
 | Entry point         | `Parser.parse()` — returns the root `Expr` or `null` on error                                                            |
 | Error type          | Private `ParseError extends RuntimeException` for controlled unwinding                                                   |
-| Panic-mode recovery | `synchronize()` discards tokens until a statement boundary (`CLASS` `FOR` `FXN` `IF` `OUT` `RETURN` `SET` `LOOP` or `;`) |
+| Panic-mode recovery | `synchronize()` discards tokens until a statement boundary (`CLASS` `FOR` `FXN` `IF` `OUT` `RETURN` `SET` `WHEN` or `;`) |
 | Token-level errors  | `Exon.error(Token, message)` reports the exact lexeme and position                                                       |
 
 **Token-level error reporting** was also added to `Exon.java` — errors now pinpoint the exact token:
@@ -284,7 +284,7 @@ out x;                    // prints: 10
 x = x + 1;                // assignment
 { set y = x * 2; out y; } // block scope — y is local
 if (x > 5) out "big"; else out "small";   // if/else
-loop (x > 0) { out x; x = x - 1; }       // loop
+when (x > 0) { out x; x = x - 1; }       // when loop
 for (set i = 0; i < 3; i = i + 1) out i; // for loop
 ```
 
@@ -303,10 +303,10 @@ if (<condition>) <thenStmt> else <elseStmt>
 
 The else branch is optional. The condition is evaluated using the same truthiness rules as the interpreter (`nil` and `false` are falsy; everything else is truthy).
 
-#### `loop` (while-style) — `Stmt.Loop`
+#### `when` (while-style) — `Stmt.Loop`
 
 ```
-loop (<condition>) <body>
+when (<condition>) <body>
 ```
 
 Executes `body` repeatedly as long as `condition` is truthy. Maps directly to `visitLoopStmt` in the interpreter.
@@ -578,7 +578,7 @@ Phase 6 — Variables & Scope  ✅ Done
 Phase 7 — Control Flow  ✅ Done
 ```
 - [x] `if` / `else` branching (`Stmt.If`, `visitIfStmt`)
-- [x] `loop` while-style construct (`Stmt.Loop`, `visitLoopStmt`)
+- [x] `when` while-style construct (`Stmt.Loop`, `visitLoopStmt`)
 - [x] `for` loop desugared to `Stmt.Loop` at parse time
 - [x] Logical `and` / `or` with short-circuit (`Expr.Logical`)
 

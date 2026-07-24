@@ -60,10 +60,10 @@ for (count = 0; count < 3; count = count + 1) {
 }
 
 
-// ─── 8. loop (while-style) ────────────────────────────────────────────────────
-// 'loop' runs while the condition is truthy
+// ─── 8. when (while-style loop) ───────────────────────────────────────────────
+// 'when' runs while the condition is truthy
 // prints 3, 4  (count is still 3 after the for loop above)
-loop (count < 5) {
+when (count < 5) {
     out count;
     count = count + 1;
 }

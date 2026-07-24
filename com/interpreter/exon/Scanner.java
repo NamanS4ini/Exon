@@ -32,7 +32,7 @@ class Scanner {
         keywords.put("this", THIS);
         keywords.put("true", TRUE);
         keywords.put("set", SET);
-        keywords.put("loop", LOOP);
+        keywords.put("when", WHEN);
     }
 
     private boolean isAtEnd() {
